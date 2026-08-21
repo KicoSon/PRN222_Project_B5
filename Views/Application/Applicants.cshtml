@@ -1,0 +1,104 @@
+@model IEnumerable<StudentPartTime.Models.Application>
+@{
+    ViewData["Title"] = "Danh sách ứng viên";
+    var job = ViewBag.Job as StudentPartTime.Models.Job;
+}
+
+<div class="container mt-2">
+    <div class="spt-page-header mb-3">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
+            <div>
+                <h1 class="h4 fw-bold text-dark mb-1"><i class="bi bi-people-fill text-linkedin me-2"></i>Quản lý ứng viên</h1>
+                @if (job != null) { <p class="text-muted small mb-0">Tin đăng: <strong class="text-dark">@job.Title</strong></p> }
+            </div>
+            <a asp-controller="Job" asp-action="MyJobs" class="btn btn-outline-linkedin btn-sm" id="btn-back-my-jobs">
+                <i class="bi bi-arrow-left me-1"></i>Quay lại danh sách tin
+            </a>
+        </div>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="spt-card text-center py-5">
+            <i class="bi bi-person-x display-4 text-muted mb-3"></i>
+            <h5 class="fw-bold text-dark">Chưa có ứng viên nộp đơn</h5>
+            <p class="text-muted small">Các đơn ứng tuyển cho tin tuyển dụng này sẽ xuất hiện tại đây.</p>
+        </div>
+    }
+    else
+    {
+        <div class="spt-table">
+            <table class="table table-hover mb-0 align-middle">
+                <thead>
+                    <tr>
+                        <th>Ứng viên</th>
+                        <th>Email liên hệ</th>
+                        <th>Ngày nộp</th>
+                        <th>Hồ sơ CV</th>
+                        <th>Trạng thái</th>
+                        <th class="text-end">Thao tác duyệt</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var app in Model)
+                    {
+                        var badgeClass = app.Status switch {
+                            "Approved" => "badge-approved",
+                            "Pending" => "badge-pending",
+                            "Interview" => "badge-interview",
+                            "Rejected" => "badge-rejected",
+                            _ => "bg-secondary"
+                        };
+                        var statusText = app.Status switch {
+                            "Approved" => "Đã duyệt nhận",
+                            "Pending" => "Mới nộp",
+                            "Interview" => "Phỏng vấn",
+                            "Rejected" => "Từ chối",
+                            _ => app.Status
+                        };
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="rounded-circle bg-linkedin text-white d-flex align-items-center justify-content-center fw-bold" style="width: 36px; height: 36px; font-size: 0.95rem;">
+                                        @(app.Student?.User?.FullName?.Substring(0, 1).ToUpper() ?? "S")
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold text-dark">@app.Student?.User?.FullName</div>
+                                        <div class="small text-muted">ID SV: @app.StudentId</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="small text-dark">@app.Student?.User?.Email</td>
+                            <td class="small text-muted">@app.AppliedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>
+                                @if (app.Resume != null)
+                                {
+                                    <a asp-action="Resume" asp-route-resumeId="@app.ResumeId" asp-route-jobId="@app.JobId" class="btn btn-sm btn-outline-linkedin rounded-pill px-3" id="btn-view-resume-@app.ApplicationId">
+                                        <i class="bi bi-file-earmark-pdf me-1"></i>Xem CV
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small">Chưa đính kèm CV</span>
+                                }
+                            </td>
+                            <td><span class="status-pill @badgeClass">@statusText</span></td>
+                            <td class="text-end">
+                                <form asp-action="UpdateStatus" asp-route-id="@app.ApplicationId" method="post" class="d-inline-flex align-items-center gap-1 justify-content-end">
+                                    @Html.AntiForgeryToken()
+                                    <select name="status" class="form-select form-select-sm rounded-pill" style="width:auto" id="select-status-@app.ApplicationId">
+                                        <option value="Interview" selected="@(app.Status == "Interview")">Mời PV</option>
+                                        <option value="Approved" selected="@(app.Status == "Approved")">Nhận việc</option>
+                                        <option value="Rejected" selected="@(app.Status == "Rejected")">Từ chối</option>
+                                    </select>
+                                    <input type="hidden" name="note" value="" />
+                                    <button type="submit" class="btn btn-sm btn-linkedin rounded-pill px-3" id="btn-update-status-@app.ApplicationId">Lưu</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

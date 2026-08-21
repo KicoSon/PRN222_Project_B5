@@ -1,0 +1,126 @@
+@model StudentPartTime.Models.CompanyDetailViewModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Chi tiết công ty";
+    ViewData["ActiveTab"] = "Companies";
+}
+
+<div class="spt-page-header d-flex justify-content-between align-items-center">
+    <h2><i class="bi bi-building me-2"></i>Chi tiết công ty</h2>
+    <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i>Quay lại
+    </a>
+</div>
+
+<div class="spt-card p-4" style="max-width: 720px;">
+    <div class="d-flex align-items-center gap-3 mb-4">
+        @if (!string.IsNullOrWhiteSpace(Model.LogoUrl))
+        {
+            <img src="@Model.LogoUrl" alt="Logo" class="rounded" style="width: 64px; height: 64px; object-fit: cover;" />
+        }
+        else
+        {
+            <i class="bi bi-building fs-1 text-secondary"></i>
+        }
+        <div>
+            <h4 class="mb-0">@Model.CompanyName</h4>
+            @{
+                var pillClass = Model.Status switch
+                {
+                    "Approved" => "badge-approved",
+                    "Rejected" => "badge-rejected",
+                    "Blocked" => "badge-rejected",
+                    _ => "badge-pending"
+                };
+            }
+            <span class="status-pill @pillClass">@Model.Status</span>
+        </div>
+    </div>
+
+    <dl class="row mb-0">
+        <dt class="col-sm-4">Email</dt>
+        <dd class="col-sm-8">@(Model.Email ?? "-")</dd>
+
+        <dt class="col-sm-4">Số điện thoại</dt>
+        <dd class="col-sm-8">@(Model.Phone ?? "-")</dd>
+
+        <dt class="col-sm-4">Website</dt>
+        <dd class="col-sm-8">
+            @if (!string.IsNullOrWhiteSpace(Model.Website))
+            {
+                <a href="@Model.Website" target="_blank" rel="noopener">@Model.Website</a>
+            }
+            else
+            {
+                @:-
+            }
+        </dd>
+
+        <dt class="col-sm-4">Địa chỉ</dt>
+        <dd class="col-sm-8">@(Model.Address ?? "-")</dd>
+
+        <dt class="col-sm-4">Tỉnh/thành</dt>
+        <dd class="col-sm-8">@(Model.ProvinceName ?? "-")</dd>
+
+        <dt class="col-sm-4">Mô tả</dt>
+        <dd class="col-sm-8">@(Model.Description ?? "-")</dd>
+
+        <dt class="col-sm-4">Số nhà tuyển dụng liên kết</dt>
+        <dd class="col-sm-8">@Model.EmployerCount</dd>
+
+        <dt class="col-sm-4">Ngày tạo</dt>
+        <dd class="col-sm-8">@Model.CreatedAt.ToString("dd/MM/yyyy")</dd>
+    </dl>
+
+    <hr />
+
+    <div class="d-flex gap-2 flex-wrap">
+        @if (Model.Status == "Pending")
+        {
+            <form asp-action="Approve" asp-route-id="@Model.CompanyId" method="post" class="d-inline">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-outline-success" onclick="return confirm('Duyệt công ty @Model.CompanyName?')">
+                    <i class="bi bi-check-circle me-1"></i>Duyệt
+                </button>
+            </form>
+
+            <button type="button" class="btn btn-outline-danger" data-bs-toggle="collapse" data-bs-target="#rejectForm">
+                <i class="bi bi-x-circle me-1"></i>Từ chối
+            </button>
+        }
+
+        @if (Model.Status == "Approved")
+        {
+            <form asp-action="Block" asp-route-id="@Model.CompanyId" method="post" class="d-inline">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-outline-danger" onclick="return confirm('Chặn công ty @Model.CompanyName?')">
+                    <i class="bi bi-slash-circle me-1"></i>Chặn
+                </button>
+            </form>
+        }
+
+        @if (Model.Status == "Blocked")
+        {
+            <form asp-action="Activate" asp-route-id="@Model.CompanyId" method="post" class="d-inline">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-outline-success" onclick="return confirm('Kích hoạt lại công ty @Model.CompanyName?')">
+                    <i class="bi bi-check-circle me-1"></i>Kích hoạt lại
+                </button>
+            </form>
+        }
+    </div>
+
+    @if (Model.Status == "Pending")
+    {
+        <div class="collapse mt-3" id="rejectForm">
+            <form asp-action="Reject" asp-route-id="@Model.CompanyId" method="post">
+                @Html.AntiForgeryToken()
+                <label class="form-label fw-semibold">Lý do từ chối</label>
+                <textarea name="reason" class="form-control mb-2" rows="2" required></textarea>
+                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Xác nhận từ chối công ty @Model.CompanyName?')">
+                    Xác nhận từ chối
+                </button>
+            </form>
+        </div>
+    }
+</div>

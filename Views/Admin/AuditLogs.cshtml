@@ -1,0 +1,81 @@
+@model IEnumerable<StudentPartTime.Models.AuditLog>
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Nhật ký hệ thống";
+    ViewData["ActiveTab"] = "AuditLogs";
+}
+
+<div class="spt-page-header">
+    <h2><i class="bi bi-journal-text me-2"></i>Nhật ký hệ thống</h2>
+</div>
+
+<div class="spt-card p-3 mb-3">
+    <form asp-action="AuditLogs" method="get" class="row g-2">
+        <div class="col-md-3">
+            <select name="userId" class="form-select">
+                <option value="">-- Tất cả người dùng --</option>
+                @foreach (var u in (IEnumerable<StudentPartTime.Models.User>)ViewBag.Users)
+                {
+                    <option value="@u.UserId" selected="@(ViewBag.UserId == u.UserId)">@u.FullName</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-3">
+            <input type="text" name="logAction" value="@ViewBag.Action" class="form-control" placeholder="Hành động (VD: ApproveJob)" />
+        </div>
+        <div class="col-md-2">
+            <input type="date" name="dateFrom" value="@(((DateTime?)ViewBag.DateFrom)?.ToString("yyyy-MM-dd"))" class="form-control" />
+        </div>
+        <div class="col-md-2">
+            <input type="date" name="dateTo" value="@(((DateTime?)ViewBag.DateTo)?.ToString("yyyy-MM-dd"))" class="form-control" />
+        </div>
+        <div class="col-md-2 d-flex gap-2">
+            <button type="submit" class="btn btn-outline-secondary flex-grow-1">
+                <i class="bi bi-search me-1"></i>Lọc
+            </button>
+            <a asp-action="AuditLogs" class="btn btn-outline-secondary">
+                <i class="bi bi-x-lg"></i>
+            </a>
+        </div>
+    </form>
+</div>
+
+<div class="spt-table">
+    <table class="table table-hover mb-0">
+        <thead>
+            <tr>
+                <th>Người dùng</th>
+                <th>Hành động</th>
+                <th>Đối tượng</th>
+                <th>Mô tả</th>
+                <th>Thời gian</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (!Model.Any())
+            {
+                <tr>
+                    <td colspan="5" class="text-center text-muted py-4">Không tìm thấy nhật ký nào.</td>
+                </tr>
+            }
+            @foreach (var log in Model)
+            {
+                <tr>
+                    <td>@(log.User?.FullName ?? "Hệ thống")</td>
+                    <td><span class="badge bg-secondary">@log.Action</span></td>
+                    <td>@log.EntityName@(log.EntityId.HasValue ? $" #{log.EntityId}" : "")</td>
+                    <td>@(log.Description ?? "-")</td>
+                    <td>@log.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@await Html.PartialAsync("_Pagination", new StudentPartTime.Models.PaginationViewModel
+{
+    CurrentPage = (int)ViewBag.CurrentPage,
+    TotalPages = (int)ViewBag.TotalPages,
+    TotalCount = (int)ViewBag.TotalCount,
+    Action = "AuditLogs"
+})

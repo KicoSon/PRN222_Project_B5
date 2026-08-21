@@ -1,0 +1,169 @@
+@model IEnumerable<StudentPartTime.Models.Job>
+@{
+    ViewData["Title"] = "Trang chủ";
+}
+
+<div class="container mt-2">
+    <div class="row g-3">
+        <!-- LEFT COLUMN: LinkedIn Profile / Status Widget -->
+        <div class="col-lg-3">
+            <div class="profile-widget-card">
+                <div class="profile-widget-cover"></div>
+                <div class="profile-widget-avatar-container">
+                    <div class="profile-widget-avatar">
+                        @(User.Identity?.IsAuthenticated == true ? User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value?.Substring(0, 1).ToUpper() : "G")
+                    </div>
+                </div>
+                <div class="profile-widget-body">
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <div class="profile-widget-name">@User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value</div>
+                        <div class="profile-widget-headline">
+                            @if (User.IsInRole("Student")) { <span>Sinh viên tìm việc bán thời gian</span> }
+                            else if (User.IsInRole("Employer")) { <span>Nhà tuyển dụng</span> }
+                            else { <span>Quản trị viên</span> }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="profile-widget-name">Chào mừng bạn!</div>
+                        <div class="profile-widget-headline">Đăng nhập để tìm việc hoặc đăng tin tuyển dụng nhanh chóng.</div>
+                        <a asp-controller="Account" asp-action="Login" class="btn btn-outline-linkedin btn-sm w-100 mb-2">Đăng nhập</a>
+                        <a asp-controller="Account" asp-action="RegisterStudent" class="btn btn-linkedin btn-sm w-100">Đăng ký ngay</a>
+                    }
+                </div>
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <div class="profile-widget-footer">
+                        @if (User.IsInRole("Student"))
+                        {
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>Đơn đã nộp</span>
+                                <a asp-controller="Application" asp-action="History" class="fw-bold text-linkedin text-decoration-none">Xem đơn</a>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>Quản lý CV</span>
+                                <a asp-controller="Resume" asp-action="Index" class="fw-bold text-linkedin text-decoration-none">CV của tôi</a>
+                            </div>
+                        }
+                        else if (User.IsInRole("Employer"))
+                        {
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>Tin đã đăng</span>
+                                <a asp-controller="Job" asp-action="MyJobs" class="fw-bold text-linkedin text-decoration-none">Xem tin</a>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>Đăng tin mới</span>
+                                <a asp-controller="Job" asp-action="Create" class="fw-bold text-linkedin text-decoration-none">Tạo tin</a>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+
+            <!-- Quick Links Box -->
+            <div class="spt-card p-3">
+                <h6 class="fw-bold text-dark mb-2 fs-6">Về StudentPT</h6>
+                <p class="small text-muted mb-2">Hệ thống tuyển dụng việc làm bán thời gian uy tín dành riêng cho sinh viên Việt Nam.</p>
+                <div class="d-grid gap-1">
+                    <a asp-controller="Job" asp-action="Index" class="btn btn-light btn-sm text-start text-dark fw-semibold border-0 py-1.5"><i class="bi bi-search text-linkedin me-2"></i>Tìm kiếm việc làm</a>
+                    <a asp-controller="Home" asp-action="Privacy" class="btn btn-light btn-sm text-start text-dark fw-semibold border-0 py-1.5"><i class="bi bi-shield-check text-linkedin me-2"></i>Chính sách & Điều khoản</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- CENTER COLUMN: Search Header & Job Feed -->
+        <div class="col-lg-6">
+            <!-- LinkedIn Style Search Box Banner -->
+            <div class="spt-linkedin-hero text-center mb-3">
+                <h1 class="fs-4 mb-2">Khám phá cơ hội nghề nghiệp</h1>
+                <p class="small text-muted mb-3">Tìm các công việc bán thời gian phù hợp với lịch học và kỹ năng của bạn</p>
+                
+                <form asp-controller="Job" asp-action="Index" method="get" class="linkedin-search-container d-flex align-items-center">
+                    <i class="bi bi-search text-muted ms-3 fs-5"></i>
+                    <input type="text" name="keyword" placeholder="Tìm theo tên công việc, vị trí, công ty..." />
+                    <button type="submit" class="btn btn-linkedin px-4 py-2 me-1">Tìm việc</button>
+                </form>
+            </div>
+
+            <!-- Job Feed Title Header -->
+            <div class="d-flex justify-content-between align-items-center mb-2 px-1">
+                <h6 class="fw-bold text-dark mb-0 fs-6"><i class="bi bi-stars text-warning me-1"></i>Việc làm gợi ý cho bạn</h6>
+                <a asp-controller="Job" asp-action="Index" class="small text-linkedin fw-semibold text-decoration-none">Tất cả việc làm <i class="bi bi-arrow-right"></i></a>
+            </div>
+
+            @if (Model == null || !Model.Any())
+            {
+                <div class="spt-card text-center py-5">
+                    <i class="bi bi-briefcase-fill text-muted display-4 mb-3"></i>
+                    <h5 class="fw-bold text-dark">Chưa có tin tuyển dụng mới</h5>
+                    <p class="text-muted small">Nếu bạn đã ứng tuyển các công việc hiện tại, chúng sẽ tự động được ẩn khỏi danh sách gợi ý.</p>
+                    <a asp-controller="Job" asp-action="Index" class="btn btn-outline-linkedin btn-sm mt-2">Duyệt toàn bộ tin việc làm</a>
+                </div>
+            }
+            else
+            {
+                @foreach (var job in Model)
+                {
+                    <a asp-controller="Job" asp-action="Details" asp-route-id="@job.JobId" class="job-feed-card">
+                        <div class="d-flex align-items-start gap-3">
+                            <div class="company-logo-placeholder">
+                                @(job.Employer?.Company?.CompanyName?.Substring(0, 1).ToUpper() ?? "C")
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="job-title-link mb-1">@job.Title</div>
+                                <div class="company-name-subtitle mb-1">@job.Employer?.Company?.CompanyName</div>
+                                <div class="location-type-text mb-2">
+                                    <i class="bi bi-geo-alt me-1"></i>@job.Province?.ProvinceName
+                                    <span class="mx-1">•</span>
+                                    <i class="bi bi-clock me-1"></i>@job.JobType?.TypeName
+                                </div>
+                                <div class="d-flex flex-wrap align-items-center gap-2 mt-2">
+                                    @if (job.SalaryMin.HasValue || job.SalaryMax.HasValue)
+                                    {
+                                        var salStr = job.SalaryMin.HasValue && job.SalaryMax.HasValue
+                                            ? $"{job.SalaryMin:N0} - {job.SalaryMax:N0} Tr/tháng"
+                                            : job.SalaryMin.HasValue ? $"Từ {job.SalaryMin:N0} Tr/tháng" : $"Đến {job.SalaryMax:N0} Tr/tháng";
+                                        <span class="salary-badge"><i class="bi bi-cash-stack me-1"></i>@salStr</span>
+                                    }
+                                    <span class="badge-linkedin-pill"><i class="bi bi-lightning-fill me-1 text-warning"></i>Ứng tuyển ngay</span>
+                                    <span class="small text-muted ms-auto">Hạn nộp: @job.Deadline.ToString("dd/MM/yyyy")</span>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                }
+            }
+        </div>
+
+        <!-- RIGHT COLUMN: News / Recommended Widgets -->
+        <div class="col-lg-3">
+            <div class="spt-card p-3 mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="fw-bold text-dark mb-0 fs-6">Tin tức tuyển dụng</h6>
+                    <i class="bi bi-info-circle text-muted" title="Thông tin thị trường việc làm"></i>
+                </div>
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2 pb-2 border-bottom">
+                        <a href="#" class="text-decoration-none text-dark fw-semibold small hover-underline line-clamp-1">Nhu cầu việc làm bán thời gian tăng 35%</a>
+                        <div class="small text-muted" style="font-size: 0.75rem;">1 ngày trước • 1,240 độc giả</div>
+                    </li>
+                    <li class="mb-2 pb-2 border-bottom">
+                        <a href="#" class="text-decoration-none text-dark fw-semibold small hover-underline line-clamp-1">Bí quyết viết CV thu hút nhà tuyển dụng</a>
+                        <div class="small text-muted" style="font-size: 0.75rem;">3 ngày trước • 3,890 độc giả</div>
+                    </li>
+                    <li class="mb-0">
+                        <a href="#" class="text-decoration-none text-dark fw-semibold small hover-underline line-clamp-1">Kỹ năng mềm cần có khi đi làm thêm</a>
+                        <div class="small text-muted" style="font-size: 0.75rem;">5 ngày trước • 2,150 độc giả</div>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Helpful Tips Card -->
+            <div class="spt-card p-3 bg-white">
+                <h6 class="fw-bold text-dark mb-2 fs-6"><i class="bi bi-lightbulb-fill text-warning me-1"></i>Lời khuyên cho Sinh viên</h6>
+                <p class="small text-muted mb-0">Hãy luôn chuẩn bị 1 bản CV đầy đủ thông tin liên hệ và học vấn trước khi nộp đơn ứng tuyển để có cơ hội nhận việc cao nhất!</p>
+            </div>
+        </div>
+    </div>
+</div>

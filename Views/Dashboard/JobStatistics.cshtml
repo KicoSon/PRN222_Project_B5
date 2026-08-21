@@ -1,0 +1,112 @@
+@model StudentPartTime.Models.JobStatisticsViewModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Thống kê tin tuyển dụng";
+    ViewData["ActiveTab"] = "JobStatistics";
+}
+
+<div class="spt-page-header">
+    <h2><i class="bi bi-bar-chart me-2"></i>Thống kê tin tuyển dụng</h2>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-lg-6">
+        <div class="spt-card p-4 h-100">
+            <h6 class="fw-bold mb-3">Tin theo danh mục</h6>
+            <canvas id="chartByCategory" height="220"></canvas>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="spt-card p-4 h-100">
+            <h6 class="fw-bold mb-3">Tin theo trạng thái</h6>
+            <canvas id="chartByStatus" height="220"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-lg-6">
+        <div class="spt-card p-4 h-100">
+            <h6 class="fw-bold mb-3">Tin theo tỉnh/thành</h6>
+            <canvas id="chartByProvince" height="220"></canvas>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="spt-card p-4 h-100">
+            <h6 class="fw-bold mb-3">Tin theo loại công việc</h6>
+            <canvas id="chartByJobType" height="220"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="spt-card p-4">
+    <h6 class="fw-bold mb-3">Bảng số liệu chi tiết</h6>
+    <div class="row">
+        <div class="col-md-6">
+            <table class="table table-sm table-borderless">
+                <thead><tr><th>Danh mục</th><th class="text-end">Số lượng</th></tr></thead>
+                <tbody>
+                    @foreach (var item in Model.ByCategory)
+                    {
+                        <tr><td>@item.Label</td><td class="text-end fw-semibold">@item.Value</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="col-md-6">
+            <table class="table table-sm table-borderless">
+                <thead><tr><th>Trạng thái</th><th class="text-end">Số lượng</th></tr></thead>
+                <tbody>
+                    @foreach (var item in Model.ByStatus)
+                    {
+                        <tr><td>@item.Label</td><td class="text-end fw-semibold">@item.Value</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const chartColors = ['#0a66c2', '#28a745', '#ffc107', '#dc3545', '#6f42c1', '#20c997', '#fd7e14', '#6c757d'];
+
+        function renderBarChart(canvasId, labels, values) {
+            new Chart(document.getElementById(canvasId), {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{ data: values, backgroundColor: chartColors }]
+                },
+                options: { responsive: true, plugins: { legend: { display: false } } }
+            });
+        }
+
+        function renderPieChart(canvasId, labels, values) {
+            new Chart(document.getElementById(canvasId), {
+                type: 'pie',
+                data: {
+                    labels: labels,
+                    datasets: [{ data: values, backgroundColor: chartColors }]
+                },
+                options: { responsive: true }
+            });
+        }
+
+        renderBarChart('chartByCategory',
+            @Html.Raw(Json.Serialize(Model.ByCategory.Select(x => x.Label))),
+            @Html.Raw(Json.Serialize(Model.ByCategory.Select(x => x.Value))));
+
+        renderPieChart('chartByStatus',
+            @Html.Raw(Json.Serialize(Model.ByStatus.Select(x => x.Label))),
+            @Html.Raw(Json.Serialize(Model.ByStatus.Select(x => x.Value))));
+
+        renderBarChart('chartByProvince',
+            @Html.Raw(Json.Serialize(Model.ByProvince.Select(x => x.Label))),
+            @Html.Raw(Json.Serialize(Model.ByProvince.Select(x => x.Value))));
+
+        renderBarChart('chartByJobType',
+            @Html.Raw(Json.Serialize(Model.ByJobType.Select(x => x.Label))),
+            @Html.Raw(Json.Serialize(Model.ByJobType.Select(x => x.Value))));
+    </script>
+}

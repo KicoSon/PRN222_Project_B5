@@ -1,0 +1,173 @@
+@model StudentPartTime.Models.Job
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<div class="container mt-2">
+    <!-- Breadcrumb / Back button -->
+    <div class="mb-3">
+        <a asp-action="Index" class="text-decoration-none text-muted small fw-semibold hover-underline" id="btn-back-to-jobs">
+            <i class="bi bi-arrow-left me-1"></i>Quay lại danh sách việc làm
+        </a>
+    </div>
+
+    <div class="row g-3">
+        <!-- Main Job Info Column -->
+        <div class="col-lg-8">
+            <div class="spt-card p-4">
+                <!-- Company Header Banner -->
+                <div class="d-flex align-items-start gap-3 mb-4">
+                    <div class="company-logo-placeholder" style="width: 64px; height: 64px; font-size: 1.8rem;">
+                        @(Model.Employer?.Company?.CompanyName?.Substring(0, 1).ToUpper() ?? "C")
+                    </div>
+                    <div>
+                        <h1 class="h3 fw-bold text-dark mb-1">@Model.Title</h1>
+                        <div class="fw-semibold text-dark mb-1">@Model.Employer?.Company?.CompanyName</div>
+                        <div class="text-muted small">
+                            <i class="bi bi-geo-alt me-1"></i>@Model.Province?.ProvinceName
+                            <span class="mx-1">•</span>
+                            <i class="bi bi-tag me-1"></i>@Model.Category?.CategoryName
+                            <span class="mx-1">•</span>
+                            <i class="bi bi-clock me-1"></i>@Model.JobType?.TypeName
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Salary & Status Badges -->
+                <div class="d-flex flex-wrap align-items-center gap-2 mb-4 p-3 rounded-3 bg-light">
+                    @if (Model.SalaryMin.HasValue || Model.SalaryMax.HasValue)
+                    {
+                        var s = Model.SalaryMin.HasValue && Model.SalaryMax.HasValue
+                            ? $"{Model.SalaryMin:N0} - {Model.SalaryMax:N0} Tr/tháng"
+                            : Model.SalaryMin.HasValue ? $"Từ {Model.SalaryMin:N0} Tr/tháng" : $"Đến {Model.SalaryMax:N0} Tr/tháng";
+                        <span class="salary-badge fs-6 px-3 py-1.5"><i class="bi bi-cash-stack me-1"></i>Mức lương: @s</span>
+                    }
+                    <span class="badge-linkedin-pill px-3 py-1.5"><i class="bi bi-person-workspace me-1"></i>Tuyển @Model.Quantity người</span>
+                </div>
+
+                <hr class="my-4 text-muted opacity-25" />
+
+                <!-- Job Details -->
+                <div class="mb-4">
+                    <h5 class="fw-bold text-dark mb-3"><i class="bi bi-card-text text-linkedin me-2"></i>Mô tả công việc</h5>
+                    <div class="text-secondary leading-relaxed">@Html.Raw(Model.Description?.Replace("\n", "<br/>"))</div>
+                </div>
+
+                @if (!string.IsNullOrEmpty(Model.Requirement))
+                {
+                    <div class="mb-4">
+                        <h5 class="fw-bold text-dark mb-3"><i class="bi bi-check-square text-linkedin me-2"></i>Yêu cầu ứng viên</h5>
+                        <div class="text-secondary leading-relaxed">@Html.Raw(Model.Requirement.Replace("\n", "<br/>"))</div>
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(Model.Benefit))
+                {
+                    <div class="mb-4">
+                        <h5 class="fw-bold text-dark mb-3"><i class="bi bi-gift text-linkedin me-2"></i>Quyền lợi được hưởng</h5>
+                        <div class="text-secondary leading-relaxed">@Html.Raw(Model.Benefit.Replace("\n", "<br/>"))</div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Right Column: Application Sidebar & Company Widget -->
+        <div class="col-lg-4">
+            <!-- Apply Action Card -->
+            <div class="spt-card p-4">
+                <h6 class="fw-bold text-dark mb-3 fs-6 pb-2 border-bottom">Ứng tuyển công việc</h6>
+                
+                <div class="mb-3 small">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Thời gian làm việc:</span>
+                        <span class="fw-semibold text-dark">@Model.WorkingTime</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Địa điểm làm việc:</span>
+                        <span class="fw-semibold text-dark">@Model.Address</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Hạn nộp hồ sơ:</span>
+                        <span class="fw-semibold text-dark">@Model.Deadline.ToString("dd/MM/yyyy")</span>
+                    </div>
+                </div>
+
+                @if (User.IsInRole("Student"))
+                {
+                    @if ((bool?)ViewBag.AlreadyApplied == true)
+                    {
+                        <div class="p-3 bg-light-success text-success rounded-3 text-center small fw-semibold border border-success border-opacity-25">
+                            <i class="bi bi-check-circle-fill me-1 fs-5 d-block mb-1 text-success"></i>
+                            Bạn đã nộp đơn ứng tuyển cho vị trí này!
+                        </div>
+                    }
+                    else if (Model.Status == "Approved" && Model.Deadline >= DateOnly.FromDateTime(DateTime.Today))
+                    {
+                        <form asp-controller="Application" asp-action="Apply" method="post" class="mt-3">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="jobId" value="@Model.JobId" />
+                            @{
+                                var resumes = ViewBag.Resumes as List<StudentPartTime.Models.Resume>;
+                            }
+                            @if (resumes != null && resumes.Any())
+                            {
+                                <div class="mb-3">
+                                    <label class="form-label small fw-semibold text-secondary">Chọn CV ứng tuyển</label>
+                                    <select name="resumeId" class="form-select form-select-sm" id="select-resume">
+                                        @foreach (var r in resumes)
+                                        {
+                                            <option value="@r.ResumeId" selected="@r.IsDefault">@r.FileName</option>
+                                        }
+                                    </select>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="alert alert-warning p-2 small mb-3">
+                                    <i class="bi bi-exclamation-triangle me-1"></i>Bạn chưa có CV nào. <a asp-controller="Resume" asp-action="Index" class="alert-link">Tạo CV ngay</a>.
+                                </div>
+                            }
+
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold text-secondary">Thư xin việc / Lời nhắn (tùy chọn)</label>
+                                <textarea name="coverLetter" class="form-control form-control-sm" rows="3" placeholder="Giới thiệu bản thân và lý do ứng tuyển..." id="input-cover-letter"></textarea>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-linkedin w-100 py-2" id="btn-apply">
+                                <i class="bi bi-lightning-fill me-1 text-warning"></i>Ứng tuyển ngay
+                            </button>
+                        </form>
+                    }
+                    else
+                    {
+                        <div class="p-3 bg-light text-muted rounded-3 text-center small border">
+                            <i class="bi bi-clock-history me-1"></i>Công việc đã hết hạn ứng tuyển
+                        </div>
+                    }
+                }
+                else if (!User.Identity!.IsAuthenticated)
+                {
+                    <a asp-controller="Account" asp-action="Login" class="btn btn-linkedin w-100 py-2 mt-2" id="btn-login-to-apply">
+                        <i class="bi bi-box-arrow-in-right me-1"></i>Đăng nhập để ứng tuyển
+                    </a>
+                }
+            </div>
+
+            <!-- Company Info Widget -->
+            <div class="spt-card p-4">
+                <h6 class="fw-bold text-dark mb-3 fs-6 pb-2 border-bottom"><i class="bi bi-building me-1 text-linkedin"></i>Thông tin công ty</h6>
+                <div class="fw-bold text-dark mb-1 fs-6">@Model.Employer?.Company?.CompanyName</div>
+                @if (!string.IsNullOrEmpty(Model.Employer?.Company?.Website))
+                {
+                    <a href="@Model.Employer.Company.Website" target="_blank" class="small text-linkedin text-decoration-none hover-underline d-block mb-2">
+                        <i class="bi bi-globe me-1"></i>@Model.Employer.Company.Website
+                    </a>
+                }
+                @if (!string.IsNullOrEmpty(Model.Employer?.Company?.Description))
+                {
+                    <p class="small text-muted mb-0">@Model.Employer.Company.Description</p>
+                }
+            </div>
+        </div>
+    </div>
+</div>

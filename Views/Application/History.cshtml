@@ -1,0 +1,104 @@
+@model IEnumerable<StudentPartTime.Models.Application>
+@{
+    ViewData["Title"] = "Lịch sử ứng tuyển";
+}
+
+<div class="container mt-2">
+    <div class="spt-page-header mb-3">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="h4 fw-bold text-dark mb-1"><i class="bi bi-journal-check text-linkedin me-2"></i>Đơn ứng tuyển của tôi</h1>
+                <p class="text-muted small mb-0">Theo dõi trạng thái tất cả các công việc bạn đã nộp đơn.</p>
+            </div>
+            <a asp-controller="Job" asp-action="Index" class="btn btn-outline-linkedin btn-sm"><i class="bi bi-search me-1"></i>Tìm việc khác</a>
+        </div>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="spt-card text-center py-5">
+            <i class="bi bi-inbox display-4 text-muted mb-3"></i>
+            <h5 class="fw-bold text-dark">Chưa có đơn ứng tuyển nào</h5>
+            <p class="text-muted small mb-3">Hãy duyệt qua danh sách việc làm và nộp đơn ngay hôm nay!</p>
+            <a asp-controller="Job" asp-action="Index" class="btn btn-linkedin btn-sm">Khám phá việc làm</a>
+        </div>
+    }
+    else
+    {
+        <div class="spt-table">
+            <table class="table table-hover mb-0 align-middle">
+                <thead>
+                    <tr>
+                        <th>Công việc</th>
+                        <th>Nhà tuyển dụng</th>
+                        <th>Ngày nộp</th>
+                        <th>Trạng thái đơn</th>
+                        <th class="text-end">Hành động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var app in Model)
+                    {
+                        var badgeClass = app.Status switch {
+                            "Approved" => "badge-approved",
+                            "Pending" => "badge-pending",
+                            "Interview" => "badge-interview",
+                            "Rejected" => "badge-rejected",
+                            "Cancelled" => "badge-cancelled",
+                            _ => "bg-secondary"
+                        };
+                        var statusText = app.Status switch {
+                            "Approved" => "Đã được nhận",
+                            "Pending" => "Đang chờ duyệt",
+                            "Interview" => "Mời phỏng vấn",
+                            "Rejected" => "Bị từ chối",
+                            "Cancelled" => "Đã hủy",
+                            _ => app.Status
+                        };
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="company-logo-placeholder" style="width: 38px; height: 38px; font-size: 1.1rem;">
+                                        @(app.Job?.Employer?.Company?.CompanyName?.Substring(0, 1).ToUpper() ?? "J")
+                                    </div>
+                                    <div>
+                                        <a asp-controller="Job" asp-action="Details" asp-route-id="@app.JobId" class="fw-bold text-linkedin text-decoration-none hover-underline">
+                                            @app.Job?.Title
+                                        </a>
+                                        <div class="small text-muted"><i class="bi bi-geo-alt me-1"></i>@app.Job?.Province?.ProvinceName</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="fw-semibold text-dark">@app.Job?.Employer?.Company?.CompanyName</td>
+                            <td class="small text-muted">@app.AppliedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>
+                                <span class="status-pill @badgeClass">@statusText</span>
+                                @if (!string.IsNullOrEmpty(app.EmployerNote))
+                                {
+                                    <div class="small text-muted mt-1"><i class="bi bi-chat-left-text me-1 text-linkedin"></i>@app.EmployerNote</div>
+                                }
+                            </td>
+                            <td class="text-end">
+                                @if (app.Status == "Pending")
+                                {
+                                    <form asp-action="Cancel" asp-route-id="@app.ApplicationId" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3" id="btn-cancel-@app.ApplicationId" onclick="return confirm('Hủy ứng tuyển này?')">
+                                            <i class="bi bi-x-lg me-1"></i>Rút đơn
+                                        </button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <a asp-controller="Job" asp-action="Details" asp-route-id="@app.JobId" class="btn btn-sm btn-light border rounded-pill px-3">
+                                        Xem tin
+                                    </a>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

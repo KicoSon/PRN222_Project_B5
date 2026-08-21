@@ -1,0 +1,41 @@
+@model StudentPartTime.Models.CategoryViewModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Sửa danh mục";
+    ViewData["ActiveTab"] = "Categories";
+}
+
+<div class="spt-page-header">
+    <h2><i class="bi bi-pencil me-2"></i>Sửa danh mục</h2>
+</div>
+
+<div class="spt-card p-4" style="max-width: 640px;">
+    <form asp-action="EditCategory" asp-route-id="@Model.CategoryId" method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="CategoryId" />
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+        <div class="mb-3">
+            <label asp-for="CategoryName" class="form-label fw-semibold">Tên danh mục</label>
+            <input asp-for="CategoryName" class="form-control" />
+            <span asp-validation-for="CategoryName" class="text-danger small"></span>
+        </div>
+
+        <div class="mb-4">
+            <label asp-for="Description" class="form-label fw-semibold">Mô tả</label>
+            <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+            <span asp-validation-for="Description" class="text-danger small"></span>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-spt-primary">
+                <i class="bi bi-check-lg me-1"></i>Lưu thay đổi
+            </button>
+            <a asp-action="Categories" class="btn btn-outline-secondary">Hủy</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

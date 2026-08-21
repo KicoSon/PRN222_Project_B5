@@ -1,0 +1,97 @@
+@model IEnumerable<StudentPartTime.Models.Company>
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Quản lý công ty";
+    ViewData["ActiveTab"] = "Companies";
+}
+
+<div class="spt-page-header">
+    <h2><i class="bi bi-building me-2"></i>Quản lý công ty</h2>
+</div>
+
+<div class="spt-card p-3 mb-3">
+    <form asp-action="Index" method="get" class="row g-2">
+        <div class="col-md-6">
+            <input type="text" name="search" value="@ViewBag.Search" class="form-control" placeholder="Tìm theo tên công ty..." />
+        </div>
+        <div class="col-md-4">
+            <select name="status" class="form-select">
+                <option value="">-- Tất cả trạng thái --</option>
+                <option value="Pending" selected="@(ViewBag.Status == "Pending")">Chờ duyệt</option>
+                <option value="Approved" selected="@(ViewBag.Status == "Approved")">Đã duyệt</option>
+                <option value="Rejected" selected="@(ViewBag.Status == "Rejected")">Từ chối</option>
+                <option value="Blocked" selected="@(ViewBag.Status == "Blocked")">Bị chặn</option>
+            </select>
+        </div>
+        <div class="col-md-2 d-flex gap-2">
+            <button type="submit" class="btn btn-outline-secondary flex-grow-1">
+                <i class="bi bi-search me-1"></i>Tìm
+            </button>
+            @if (!string.IsNullOrWhiteSpace((string?)ViewBag.Search) || !string.IsNullOrWhiteSpace((string?)ViewBag.Status))
+            {
+                <a asp-action="Index" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-lg"></i>
+                </a>
+            }
+        </div>
+    </form>
+</div>
+
+<div class="spt-table">
+    <table class="table table-hover mb-0">
+        <thead>
+            <tr>
+                <th>Tên công ty</th>
+                <th>Email</th>
+                <th>Tỉnh/thành</th>
+                <th>Trạng thái</th>
+                <th>Ngày tạo</th>
+                <th>Thao tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (!Model.Any())
+            {
+                <tr>
+                    <td colspan="6" class="text-center text-muted py-4">Không tìm thấy công ty nào.</td>
+                </tr>
+            }
+            @foreach (var company in Model)
+            {
+                <tr>
+                    <td class="fw-semibold">@company.CompanyName</td>
+                    <td>@(company.Email ?? "-")</td>
+                    <td>@(company.Province?.ProvinceName ?? "-")</td>
+                    <td>
+                        @{
+                            var pillClass = company.Status switch
+                            {
+                                "Approved" => "badge-approved",
+                                "Rejected" => "badge-rejected",
+                                "Blocked" => "badge-rejected",
+                                _ => "badge-pending"
+                            };
+                        }
+                        <span class="status-pill @pillClass">@company.Status</span>
+                    </td>
+                    <td>@company.CreatedAt.ToString("dd/MM/yyyy")</td>
+                    <td>
+                        <a asp-action="Details" asp-route-id="@company.CompanyId" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-eye me-1"></i>Xem
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@await Html.PartialAsync("_Pagination", new StudentPartTime.Models.PaginationViewModel
+{
+    CurrentPage = (int)ViewBag.CurrentPage,
+    TotalPages = (int)ViewBag.TotalPages,
+    TotalCount = (int)ViewBag.TotalCount,
+    Search = (string?)ViewBag.Search,
+    Action = "Index",
+    Controller = "Company"
+})

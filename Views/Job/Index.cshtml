@@ -1,0 +1,132 @@
+@model IEnumerable<StudentPartTime.Models.Job>
+@{
+    ViewData["Title"] = "Tìm kiếm việc làm";
+}
+
+<div class="container mt-2">
+    <!-- Top Filter & Search Header -->
+    <div class="spt-page-header mb-3">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
+            <div>
+                <h1 class="h4 fw-bold text-dark mb-1"><i class="bi bi-search text-linkedin me-2"></i>Tìm kiếm việc làm bán thời gian</h1>
+                <p class="text-muted small mb-0">Khám phá danh sách công việc phù hợp với bạn và ứng tuyển chỉ với vài click.</p>
+            </div>
+            @if (User.IsInRole("Employer"))
+            {
+                <a asp-action="Create" class="btn btn-linkedin"><i class="bi bi-plus-lg me-1"></i>Đăng tin tuyển dụng</a>
+            }
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <!-- Sidebar Filters -->
+        <div class="col-lg-3">
+            <div class="spt-card p-3">
+                <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                    <h6 class="fw-bold text-dark mb-0 fs-6"><i class="bi bi-funnel-fill text-linkedin me-1"></i>Bộ lọc tìm kiếm</h6>
+                    <a asp-action="Index" class="small text-muted text-decoration-none hover-underline">Xóa lọc</a>
+                </div>
+
+                <form asp-action="Index" method="get" id="filter-form">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-secondary">Từ khóa</label>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-light border-end-0"><i class="bi bi-search"></i></span>
+                            <input type="text" name="keyword" value="@ViewBag.Keyword" class="form-control border-start-0" placeholder="Nhập tên việc, công ty..." />
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-secondary">Danh mục</label>
+                        <select name="categoryId" asp-items="ViewBag.Categories" class="form-select form-select-sm" id="select-category" onchange="document.getElementById('filter-form').submit()">
+                            <option value="">Tất cả danh mục</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-secondary">Hình thức làm việc</label>
+                        <select name="jobTypeId" asp-items="ViewBag.JobTypes" class="form-select form-select-sm" id="select-job-type" onchange="document.getElementById('filter-form').submit()">
+                            <option value="">Tất cả hình thức</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-secondary">Tỉnh / Thành phố</label>
+                        <select name="provinceId" asp-items="ViewBag.Provinces" class="form-select form-select-sm" id="select-province" onchange="document.getElementById('filter-form').submit()">
+                            <option value="">Tất cả địa điểm</option>
+                        </select>
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold text-secondary">Lương min (Tr)</label>
+                            <input type="number" name="salaryMin" value="@ViewBag.SalaryMin" class="form-control form-control-sm" min="0" step="0.5" placeholder="0" />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold text-secondary">Lương max (Tr)</label>
+                            <input type="number" name="salaryMax" value="@ViewBag.SalaryMax" class="form-control form-control-sm" min="0" step="0.5" placeholder="50" />
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-linkedin btn-sm w-100 mb-2" id="btn-apply-filter"><i class="bi bi-filter me-1"></i>Áp dụng bộ lọc</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Main Job Feed -->
+        <div class="col-lg-9">
+            <div class="d-flex justify-content-between align-items-center mb-3 px-1">
+                <span class="text-muted small">Tìm thấy <strong class="text-dark fw-bold">@Model.Count()</strong> công việc phù hợp</span>
+            </div>
+
+            @if (!Model.Any())
+            {
+                <div class="spt-card text-center py-5">
+                    <i class="bi bi-search display-4 text-muted mb-3"></i>
+                    <h5 class="fw-bold text-dark">Không tìm thấy việc làm phù hợp</h5>
+                    <p class="text-muted small mb-3">Hãy thử bỏ các tiêu chí lọc hoặc tìm kiếm theo từ khóa khác.</p>
+                    <a asp-action="Index" class="btn btn-outline-linkedin btn-sm">Xem tất cả công việc</a>
+                </div>
+            }
+            else
+            {
+                <div class="d-flex flex-column gap-2">
+                    @foreach (var job in Model)
+                    {
+                        <a asp-action="Details" asp-route-id="@job.JobId" class="job-feed-card">
+                            <div class="d-flex align-items-start gap-3">
+                                <div class="company-logo-placeholder">
+                                    @(job.Employer?.Company?.CompanyName?.Substring(0, 1).ToUpper() ?? "C")
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-start mb-1 gap-1">
+                                        <div class="job-title-link">@job.Title</div>
+                                        @if (job.SalaryMin.HasValue || job.SalaryMax.HasValue)
+                                        {
+                                            var salStr = job.SalaryMin.HasValue && job.SalaryMax.HasValue
+                                                ? $"{job.SalaryMin:N0} - {job.SalaryMax:N0} Tr/tháng"
+                                                : job.SalaryMin.HasValue ? $"Từ {job.SalaryMin:N0} Tr/tháng" : $"Đến {job.SalaryMax:N0} Tr/tháng";
+                                            <span class="salary-badge ms-sm-auto"><i class="bi bi-cash-stack me-1"></i>@salStr</span>
+                                        }
+                                    </div>
+                                    <div class="company-name-subtitle mb-1"><i class="bi bi-building me-1 text-muted"></i>@job.Employer?.Company?.CompanyName</div>
+                                    <div class="location-type-text mb-2">
+                                        <i class="bi bi-geo-alt me-1"></i>@job.Province?.ProvinceName
+                                        <span class="mx-1">•</span>
+                                        <i class="bi bi-tag me-1"></i>@job.Category?.CategoryName
+                                        <span class="mx-1">•</span>
+                                        <i class="bi bi-clock me-1"></i>@job.JobType?.TypeName
+                                    </div>
+                                    <div class="d-flex flex-wrap align-items-center gap-2 mt-2">
+                                        <span class="badge-linkedin-pill"><i class="bi bi-lightning-fill me-1 text-warning"></i>Ứng tuyển dễ dàng</span>
+                                        <span class="small text-muted ms-auto"><i class="bi bi-calendar-event me-1"></i>Hạn nộp: @job.Deadline.ToString("dd/MM/yyyy")</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>

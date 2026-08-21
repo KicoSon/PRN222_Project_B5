@@ -1,0 +1,65 @@
+@model IEnumerable<StudentPartTime.Models.Notification>
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Thông báo hệ thống";
+    ViewData["ActiveTab"] = "Notifications";
+}
+
+<div class="spt-page-header">
+    <h2><i class="bi bi-bell me-2"></i>Thông báo hệ thống</h2>
+</div>
+
+<div class="spt-table">
+    <table class="table table-hover mb-0">
+        <thead>
+            <tr>
+                <th>Tiêu đề</th>
+                <th>Người nhận</th>
+                <th>Loại</th>
+                <th>Trạng thái</th>
+                <th>Ngày tạo</th>
+                <th>Thao tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (!Model.Any())
+            {
+                <tr>
+                    <td colspan="6" class="text-center text-muted py-4">Không có thông báo nào.</td>
+                </tr>
+            }
+            @foreach (var notification in Model)
+            {
+                <tr>
+                    <td class="fw-semibold">@notification.Title</td>
+                    <td>@(notification.User?.FullName ?? "-")</td>
+                    <td><span class="badge bg-secondary">@notification.Type</span></td>
+                    <td>
+                        @if (notification.IsRead)
+                        {
+                            <span class="status-pill badge-approved">Đã đọc</span>
+                        }
+                        else
+                        {
+                            <span class="status-pill badge-pending">Chưa đọc</span>
+                        }
+                    </td>
+                    <td>@notification.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                    <td>
+                        <a asp-action="NotificationDetails" asp-route-id="@notification.NotificationId" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-eye me-1"></i>Xem
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@await Html.PartialAsync("_Pagination", new StudentPartTime.Models.PaginationViewModel
+{
+    CurrentPage = (int)ViewBag.CurrentPage,
+    TotalPages = (int)ViewBag.TotalPages,
+    TotalCount = (int)ViewBag.TotalCount,
+    Action = "Notifications"
+})

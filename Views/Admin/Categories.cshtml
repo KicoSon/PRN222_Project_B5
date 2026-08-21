@@ -1,0 +1,97 @@
+@model IEnumerable<StudentPartTime.Models.Category>
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Quản lý danh mục";
+    ViewData["ActiveTab"] = "Categories";
+}
+
+<div class="spt-page-header d-flex justify-content-between align-items-center">
+    <h2><i class="bi bi-tags me-2"></i>Quản lý danh mục</h2>
+    <a asp-action="CreateCategory" class="btn btn-spt-primary btn-sm" id="btn-create-category">
+        <i class="bi bi-plus-lg me-1"></i>Thêm danh mục
+    </a>
+</div>
+
+<div class="spt-card p-3 mb-3">
+    <form asp-action="Categories" method="get" class="d-flex gap-2">
+        <input type="text" name="search" value="@ViewBag.Search" class="form-control" placeholder="Tìm theo tên danh mục..." />
+        <button type="submit" class="btn btn-outline-secondary">
+            <i class="bi bi-search me-1"></i>Tìm kiếm
+        </button>
+        @if (!string.IsNullOrWhiteSpace((string?)ViewBag.Search))
+        {
+            <a asp-action="Categories" class="btn btn-outline-secondary">
+                <i class="bi bi-x-lg"></i>
+            </a>
+        }
+    </form>
+</div>
+
+<div class="spt-table">
+    <table class="table table-hover mb-0">
+        <thead>
+            <tr>
+                <th>Tên danh mục</th>
+                <th>Mô tả</th>
+                <th>Trạng thái</th>
+                <th>Ngày tạo</th>
+                <th>Thao tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (!Model.Any())
+            {
+                <tr>
+                    <td colspan="5" class="text-center text-muted py-4">Không tìm thấy danh mục nào.</td>
+                </tr>
+            }
+            @foreach (var category in Model)
+            {
+                <tr>
+                    <td class="fw-semibold">@category.CategoryName</td>
+                    <td>@(string.IsNullOrWhiteSpace(category.Description) ? "-" : category.Description)</td>
+                    <td>
+                        @if (category.IsActive)
+                        {
+                            <span class="status-pill badge-approved">Hoạt động</span>
+                        }
+                        else
+                        {
+                            <span class="status-pill badge-rejected">Vô hiệu hóa</span>
+                        }
+                    </td>
+                    <td>@category.CreatedAt.ToString("dd/MM/yyyy")</td>
+                    <td>
+                        <a asp-action="EditCategory" asp-route-id="@category.CategoryId" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-pencil me-1"></i>Sửa
+                        </a>
+                        <form asp-action="ToggleCategoryStatus" asp-route-id="@category.CategoryId" method="post" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            @if (category.IsActive)
+                            {
+                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Vô hiệu hóa danh mục @category.CategoryName?')">
+                                    <i class="bi bi-slash-circle me-1"></i>Vô hiệu hóa
+                                </button>
+                            }
+                            else
+                            {
+                                <button type="submit" class="btn btn-sm btn-outline-success" onclick="return confirm('Kích hoạt danh mục @category.CategoryName?')">
+                                    <i class="bi bi-check-circle me-1"></i>Kích hoạt
+                                </button>
+                            }
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@await Html.PartialAsync("_Pagination", new StudentPartTime.Models.PaginationViewModel
+{
+    CurrentPage = (int)ViewBag.CurrentPage,
+    TotalPages = (int)ViewBag.TotalPages,
+    TotalCount = (int)ViewBag.TotalCount,
+    Search = (string?)ViewBag.Search,
+    Action = "Categories"
+})

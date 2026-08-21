@@ -1,0 +1,160 @@
+@model IEnumerable<StudentPartTime.Models.Job>
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Duyệt tin tuyển dụng";
+    ViewData["ActiveTab"] = "Moderation";
+}
+
+<div class="spt-page-header">
+    <h2><i class="bi bi-hourglass-split me-2"></i>Duyệt tin tuyển dụng</h2>
+</div>
+
+<div class="spt-card p-3 mb-3">
+    <form asp-action="PendingJobs" method="get" class="row g-2">
+        <div class="col-md-6">
+            <input type="text" name="search" value="@ViewBag.Search" class="form-control" placeholder="Tìm theo tiêu đề hoặc tên công ty..." id="input-search-jobs" />
+        </div>
+        <div class="col-md-4">
+            <select name="status" class="form-select" id="select-status-filter">
+                <option value="Pending" selected="@(ViewBag.Status == "Pending")">Chờ duyệt</option>
+                <option value="Approved" selected="@(ViewBag.Status == "Approved")">Đã duyệt</option>
+                <option value="Rejected" selected="@(ViewBag.Status == "Rejected")">Từ chối</option>
+                <option value="Closed" selected="@(ViewBag.Status == "Closed")">Đã đóng</option>
+                <option value="Expired" selected="@(ViewBag.Status == "Expired")">Hết hạn</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-outline-secondary w-100" id="btn-filter-jobs">
+                <i class="bi bi-search me-1"></i>Lọc
+            </button>
+        </div>
+    </form>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="spt-card text-center py-5">
+        <i class="bi bi-check-circle display-4 text-success mb-3"></i>
+        <h5 class="fw-bold">Không có tin tuyển dụng nào phù hợp!</h5>
+        <p class="text-muted small">Không tìm thấy tin tuyển dụng nào ở trạng thái này.</p>
+    </div>
+}
+else
+{
+    <div class="spt-table">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Tiêu đề công việc</th>
+                    <th>Nhà tuyển dụng</th>
+                    <th>Địa điểm</th>
+                    <th>Hạn nộp hồ sơ</th>
+                    <th>Trạng thái</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var job in Model)
+                {
+                    <tr>
+                        <td>
+                            <div class="fw-bold text-linkedin">@job.Title</div>
+                            <div class="text-muted small">Danh mục: @job.Category?.CategoryName | @job.JobType?.TypeName</div>
+                        </td>
+                        <td>
+                            <div class="fw-semibold">@job.Employer?.Company?.CompanyName</div>
+                        </td>
+                        <td>@job.Province?.ProvinceName</td>
+                        <td>@job.Deadline.ToString("dd/MM/yyyy")</td>
+                        <td>
+                            @{
+                                var pillClass = job.Status switch
+                                {
+                                    "Approved" => "badge-approved",
+                                    "Rejected" => "badge-rejected",
+                                    "Closed" => "badge-rejected",
+                                    "Expired" => "badge-rejected",
+                                    _ => "badge-pending"
+                                };
+                            }
+                            <span class="status-pill @pillClass">@job.Status</span>
+                        </td>
+                        <td>
+                            <div class="d-flex gap-2">
+                                <a asp-action="Details" asp-route-id="@job.JobId" class="btn btn-sm btn-outline-primary" id="btn-view-@job.JobId"><i class="bi bi-eye"></i> Xem</a>
+
+                                @if (job.Status == "Pending")
+                                {
+                                    <form asp-action="Approve" asp-route-id="@job.JobId" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm btn-success" id="btn-approve-@job.JobId" onclick="return confirm('Duyệt tin tuyển dụng này?')"><i class="bi bi-check-lg"></i> Duyệt</button>
+                                    </form>
+
+                                    <button type="button" class="btn btn-sm btn-danger" id="btn-reject-@job.JobId" data-bs-toggle="modal" data-bs-target="#rejectModal" data-job-id="@job.JobId" data-job-title="@job.Title">
+                                        <i class="bi bi-x-lg"></i> Từ chối
+                                    </button>
+                                }
+
+                                @if (job.Status == "Approved")
+                                {
+                                    <form asp-action="AdminClose" asp-route-id="@job.JobId" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary" id="btn-close-@job.JobId" onclick="return confirm('Đóng tin tuyển dụng này?')"><i class="bi bi-slash-circle"></i> Đóng tin</button>
+                                    </form>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Reject Modal -->
+    <div class="modal fade" id="rejectModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Từ chối tin tuyển dụng</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form asp-action="Reject" method="post" id="reject-form">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" id="reject-job-id" />
+                    <div class="modal-body">
+                        <p>Bạn đang từ chối tin: <strong id="reject-job-title" class="text-danger"></strong></p>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Lý do từ chối *</label>
+                            <textarea name="reason" class="form-control" rows="3" required id="input-reject-reason" placeholder="Nhập lý do từ chối để phản hồi cho nhà tuyển dụng..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-danger" id="btn-confirm-reject">Xác nhận từ chối</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    @await Html.PartialAsync("_Pagination", new StudentPartTime.Models.PaginationViewModel
+    {
+        CurrentPage = (int)ViewBag.CurrentPage,
+        TotalPages = (int)ViewBag.TotalPages,
+        TotalCount = (int)ViewBag.TotalCount,
+        Search = (string?)ViewBag.Search,
+        Action = "PendingJobs",
+        Controller = "Job"
+    })
+}
+
+@section Scripts {
+    <script>
+        document.getElementById('rejectModal')?.addEventListener('show.bs.modal', function(e) {
+            const btn = e.relatedTarget;
+            document.getElementById('reject-job-id').value = btn.dataset.jobId;
+            document.getElementById('reject-job-title').textContent = btn.dataset.jobTitle;
+            document.getElementById('reject-form').action = '/Job/Reject/' + btn.dataset.jobId;
+        });
+    </script>
+}

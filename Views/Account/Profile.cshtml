@@ -1,0 +1,155 @@
+@model StudentPartTime.Models.ProfileViewModel
+@{
+    ViewData["Title"] = "Hồ sơ cá nhân";
+    bool isStudent = User.IsInRole("Student");
+    bool isEmployer = User.IsInRole("Employer");
+}
+
+<div class="container mt-2">
+    <div class="spt-page-header mb-3">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="h4 fw-bold text-dark mb-1"><i class="bi bi-person-badge-fill text-linkedin me-2"></i>Hồ sơ cá nhân</h1>
+                <p class="text-muted small mb-0">Quản lý và cập nhật thông tin cá nhân của bạn.</p>
+            </div>
+            <a asp-action="ChangePassword" class="btn btn-outline-linkedin btn-sm" id="btn-change-password-link">
+                <i class="bi bi-key me-1"></i>Đổi mật khẩu
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <!-- Profile Header Card -->
+        <div class="col-12">
+            <div class="profile-widget-card mb-3">
+                <div class="profile-widget-cover" style="height: 100px;"></div>
+                <div class="profile-widget-avatar-container" style="margin-top: -45px; padding-left: 2rem;">
+                    <div class="profile-widget-avatar" style="width: 90px; height: 90px; font-size: 2.5rem;">
+                        @(Model.FullName?.Substring(0, 1).ToUpper() ?? "U")
+                    </div>
+                </div>
+                <div class="p-4 pt-1">
+                    <h2 class="h4 fw-bold text-dark mb-1">@Model.FullName</h2>
+                    <p class="text-muted mb-2">@Model.Email <span class="mx-1">•</span> <span class="badge bg-linkedin text-white">@(isStudent ? "Sinh viên" : isEmployer ? "Nhà tuyển dụng" : "Quản trị viên")</span></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Edit Card -->
+        <div class="col-12">
+            <div class="spt-form-card">
+                <form asp-action="Profile" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="UserId" />
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small mb-3"></div>
+
+                    <h6 class="fw-bold text-linkedin mb-3"><i class="bi bi-person me-1"></i>Thông tin cá nhân cơ bản</h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary">Email (không thể thay đổi)</label>
+                            <input value="@Model.Email" class="form-control bg-light" readonly disabled />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="FullName">Họ và tên *</label>
+                            <input asp-for="FullName" class="form-control" id="input-fullname" />
+                            <span asp-validation-for="FullName" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="PhoneNumber">Số điện thoại</label>
+                            <input asp-for="PhoneNumber" class="form-control" id="input-phone" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Gender">Giới tính</label>
+                            <select asp-for="Gender" class="form-select" id="select-gender">
+                                <option value="">-- Chọn giới tính --</option>
+                                <option value="Male">Nam</option>
+                                <option value="Female">Nữ</option>
+                                <option value="Other">Khác</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label asp-for="Address">Địa chỉ hiện tại</label>
+                            <input asp-for="Address" class="form-control" id="input-address" />
+                        </div>
+                    </div>
+
+                    @if (isStudent)
+                    {
+                        <h6 class="fw-bold text-linkedin mb-3"><i class="bi bi-mortarboard me-1"></i>Học vấn & Kỹ năng</h6>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label asp-for="University">Trường Đại học / Cao đẳng</label>
+                                <input asp-for="University" class="form-control" id="input-university" />
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="Major">Chuyên ngành</label>
+                                <input asp-for="Major" class="form-control" id="input-major" />
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="GraduationYear">Năm tốt nghiệp</label>
+                                <input asp-for="GraduationYear" class="form-control" type="number" id="input-grad-year" />
+                            </div>
+                            <div class="col-12">
+                                <label asp-for="Experience">Kinh nghiệm làm việc</label>
+                                <textarea asp-for="Experience" class="form-control" rows="3" placeholder="Mô tả công việc đã từng làm..." id="input-experience"></textarea>
+                            </div>
+                            <div class="col-12">
+                                <label asp-for="SkillSummary">Tổng quan kỹ năng</label>
+                                <textarea asp-for="SkillSummary" class="form-control" rows="3" placeholder="Kỹ năng giao tiếp, Tiếng Anh, Word/Excel..." id="input-skills"></textarea>
+                            </div>
+                        </div>
+                    }
+
+                    @if (isEmployer)
+                    {
+                        <h6 class="fw-bold text-linkedin mb-3"><i class="bi bi-building me-1"></i>Thông tin doanh nghiệp</h6>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label asp-for="Position">Chức vụ</label>
+                                <input asp-for="Position" class="form-control" id="input-position" />
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="CompanyName">Tên công ty</label>
+                                <input asp-for="CompanyName" class="form-control" id="input-company-name" />
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="CompanyEmail">Email công ty</label>
+                                <input asp-for="CompanyEmail" class="form-control" id="input-company-email" />
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="CompanyPhone">Điện thoại công ty</label>
+                                <input asp-for="CompanyPhone" class="form-control" id="input-company-phone" />
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="CompanyWebsite">Website</label>
+                                <input asp-for="CompanyWebsite" class="form-control" id="input-website" />
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="CompanyProvinceId">Tỉnh / Thành phố trụ sở</label>
+                                <select asp-for="CompanyProvinceId" asp-items="ViewBag.Provinces" class="form-select" id="select-province">
+                                    <option value="">-- Chọn tỉnh/thành --</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label asp-for="CompanyAddress">Địa chỉ trụ sở</label>
+                                <input asp-for="CompanyAddress" class="form-control" id="input-company-address" />
+                            </div>
+                            <div class="col-12">
+                                <label asp-for="CompanyDescription">Giới thiệu công ty</label>
+                                <textarea asp-for="CompanyDescription" class="form-control" rows="3" id="input-company-description"></textarea>
+                            </div>
+                        </div>
+                    }
+
+                    <div class="pt-3 border-top d-flex gap-2 justify-content-end">
+                        <button type="submit" class="btn btn-linkedin px-4" id="btn-save-profile">Lưu thay đổi</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+}

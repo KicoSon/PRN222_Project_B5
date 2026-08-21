@@ -1,0 +1,161 @@
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Trang chủ Admin";
+    ViewData["ActiveTab"] = "Dashboard";
+}
+
+<div class="spt-page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h2 class="mb-1"><i class="bi bi-speedometer2 me-2 text-linkedin"></i>Bảng điều khiển Admin</h2>
+        <p class="text-muted small mb-0">Tổng quan hệ thống StudentPartTime</p>
+    </div>
+    <div class="text-muted small">
+        <i class="bi bi-clock me-1"></i>@DateTime.Now.ToString("dd/MM/yyyy HH:mm")
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="spt-card p-4 h-100">
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+                     style="width:52px;height:52px;background:rgba(13,110,253,0.12)">
+                    <i class="bi bi-person-badge fs-4" style="color:#0d6efd"></i>
+                </div>
+                <div>
+                    <div class="text-muted small mb-1">Tổng người dùng</div>
+                    <h3 class="fw-bold mb-0 text-dark" id="stat-users">@ViewBag.TotalUsers</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="spt-card p-4 h-100">
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+                     style="width:52px;height:52px;background:rgba(10,102,194,0.12)">
+                    <i class="bi bi-mortarboard fs-4 text-linkedin"></i>
+                </div>
+                <div>
+                    <div class="text-muted small mb-1">Sinh viên đăng ký</div>
+                    <h3 class="fw-bold mb-0 text-dark" id="stat-students">@ViewBag.TotalStudents</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="spt-card p-4 h-100">
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+                     style="width:52px;height:52px;background:rgba(40,167,69,0.12)">
+                    <i class="bi bi-building fs-4 text-success"></i>
+                </div>
+                <div>
+                    <div class="text-muted small mb-1">Doanh nghiệp</div>
+                    <h3 class="fw-bold mb-0 text-dark" id="stat-employers">@ViewBag.TotalEmployers</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="spt-card p-4 h-100">
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+                     style="width:52px;height:52px;background:rgba(32,201,151,0.12)">
+                    <i class="bi bi-buildings fs-4" style="color:#20c997"></i>
+                </div>
+                <div>
+                    <div class="text-muted small mb-1">Công ty</div>
+                    <h3 class="fw-bold mb-0 text-dark" id="stat-companies">@ViewBag.TotalCompanies</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="spt-card p-4 h-100">
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+                     style="width:52px;height:52px;background:rgba(108,117,125,0.12)">
+                    <i class="bi bi-briefcase-fill fs-4 text-secondary"></i>
+                </div>
+                <div>
+                    <div class="text-muted small mb-1">Tổng số tin đăng</div>
+                    <h3 class="fw-bold mb-0 text-dark" id="stat-jobs-all">@ViewBag.TotalJobsAll</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="spt-card p-4 h-100">
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+                     style="width:52px;height:52px;background:rgba(255,193,7,0.15)">
+                    <i class="bi bi-briefcase fs-4 text-warning"></i>
+                </div>
+                <div>
+                    <div class="text-muted small mb-1">Tin đã duyệt</div>
+                    <h3 class="fw-bold mb-0 text-dark" id="stat-jobs">@ViewBag.TotalJobs</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="spt-card p-4 h-100">
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+                     style="width:52px;height:52px;background:rgba(220,53,69,0.12)">
+                    <i class="bi bi-hourglass-split fs-4 text-danger"></i>
+                </div>
+                <div>
+                    <div class="text-muted small mb-1">Chờ duyệt</div>
+                    <h3 class="fw-bold mb-0 text-dark" id="stat-pending">@ViewBag.TotalPending</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="spt-card p-4 h-100">
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+                     style="width:52px;height:52px;background:rgba(111,66,193,0.12)">
+                    <i class="bi bi-send fs-4" style="color:#6f42c1"></i>
+                </div>
+                <div>
+                    <div class="text-muted small mb-1">Tổng đơn ứng tuyển</div>
+                    <h3 class="fw-bold mb-0 text-dark" id="stat-applications">@ViewBag.TotalApplications</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick actions -->
+<div class="row g-3">
+    <div class="col-12">
+        <div class="spt-card p-4 h-100">
+            <h6 class="fw-bold mb-3"><i class="bi bi-lightning-charge me-2 text-linkedin"></i>Thao tác nhanh</h6>
+            <div class="d-flex flex-wrap gap-2">
+                <a asp-controller="Job" asp-action="PendingJobs" class="btn btn-spt-primary btn-sm" id="btn-go-pending">
+                    <i class="bi bi-hourglass-split me-1"></i>Duyệt tin tuyển dụng
+                    @if ((int)ViewBag.TotalPending > 0)
+                    {
+                        <span class="badge bg-white text-danger ms-1">@ViewBag.TotalPending</span>
+                    }
+                </a>
+                <a asp-controller="Admin" asp-action="Users" class="btn btn-outline-secondary btn-sm" id="btn-go-users">
+                    <i class="bi bi-people me-1"></i>Quản lý người dùng
+                </a>
+                <a asp-controller="Job" asp-action="Index" class="btn btn-outline-secondary btn-sm" id="btn-go-jobs">
+                    <i class="bi bi-briefcase me-1"></i>Xem trang tuyển dụng
+                </a>
+                <a asp-controller="Dashboard" asp-action="JobStatistics" class="btn btn-outline-secondary btn-sm" id="btn-go-stats">
+                    <i class="bi bi-bar-chart me-1"></i>Xem thống kê
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

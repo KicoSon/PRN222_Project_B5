@@ -1,0 +1,103 @@
+@model IEnumerable<StudentPartTime.Models.Job>
+@{
+    ViewData["Title"] = "Tin tuyển dụng của tôi";
+}
+
+<div class="container mt-2">
+    <div class="spt-page-header mb-3">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="h4 fw-bold text-dark mb-1"><i class="bi bi-clipboard-check-fill text-linkedin me-2"></i>Tin tuyển dụng của tôi</h1>
+                <p class="text-muted small mb-0">Quản lý danh sách công việc đã đăng và duyệt hồ sơ ứng viên.</p>
+            </div>
+            <a asp-action="Create" class="btn btn-linkedin" id="btn-create-job">
+                <i class="bi bi-plus-lg me-1"></i>Tạo tin đăng mới
+            </a>
+        </div>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="spt-card text-center py-5">
+            <i class="bi bi-inbox display-4 text-muted mb-3"></i>
+            <h5 class="fw-bold text-dark">Bạn chưa đăng tin tuyển dụng nào</h5>
+            <p class="text-muted small mb-3">Đăng tin tuyển dụng ngay để tiếp cận hàng ngàn sinh viên tiềm năng.</p>
+            <a asp-action="Create" class="btn btn-linkedin btn-sm">Tạo tin đầu tiên</a>
+        </div>
+    }
+    else
+    {
+        <div class="spt-table">
+            <table class="table table-hover mb-0 align-middle">
+                <thead>
+                    <tr>
+                        <th>Tiêu đề tin đăng</th>
+                        <th>Trạng thái</th>
+                        <th>Hạn nộp</th>
+                        <th>Hồ sơ ứng viên</th>
+                        <th class="text-end">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var job in Model)
+                    {
+                        var badgeClass = job.Status switch {
+                            "Approved" => "badge-approved",
+                            "Pending" => "badge-pending",
+                            "Rejected" => "badge-rejected",
+                            "Closed" => "badge-closed",
+                            _ => "bg-secondary"
+                        };
+                        var statusText = job.Status switch {
+                            "Approved" => "Đã duyệt / Đang hiển thị",
+                            "Pending" => "Chờ duyệt",
+                            "Rejected" => "Bị từ chối",
+                            "Closed" => "Đã đóng",
+                            _ => job.Status
+                        };
+                        <tr>
+                            <td>
+                                <div class="fw-bold text-dark">@job.Title</div>
+                                <div class="small text-muted"><i class="bi bi-tag me-1"></i>@job.Category?.CategoryName <span class="mx-1">•</span> <i class="bi bi-geo-alt me-1"></i>@job.Province?.ProvinceName</div>
+                            </td>
+                            <td><span class="status-pill @badgeClass">@statusText</span></td>
+                            <td class="small text-muted">@job.Deadline.ToString("dd/MM/yyyy")</td>
+                            <td>
+                                @if (job.Applications.Any())
+                                {
+                                    <a asp-controller="Application" asp-action="Applicants" asp-route-jobId="@job.JobId" class="btn btn-sm btn-outline-linkedin rounded-pill px-3 fw-bold">
+                                        <i class="bi bi-people me-1"></i>@job.Applications.Count ứng viên
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small">Chưa có ứng viên</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <div class="d-inline-flex gap-1 justify-content-end">
+                                    <a asp-action="Details" asp-route-id="@job.JobId" class="btn btn-sm btn-light border rounded-circle" id="btn-view-@job.JobId" title="Xem chi tiết"><i class="bi bi-eye text-dark"></i></a>
+                                    @if (job.Status != "Closed")
+                                    {
+                                        <a asp-action="Edit" asp-route-id="@job.JobId" class="btn btn-sm btn-light border rounded-circle" id="btn-edit-@job.JobId" title="Chỉnh sửa"><i class="bi bi-pencil text-dark"></i></a>
+                                        <form asp-action="Close" asp-route-id="@job.JobId" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-sm btn-light border rounded-circle" id="btn-close-@job.JobId" title="Đóng tin" onclick="return confirm('Đóng tin này?')"><i class="bi bi-x-circle text-warning"></i></button>
+                                        </form>
+                                    }
+                                    @if (!job.Applications.Any())
+                                    {
+                                        <form asp-action="Delete" asp-route-id="@job.JobId" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-sm btn-light border rounded-circle" id="btn-delete-@job.JobId" title="Xóa tin" onclick="return confirm('Xóa tin này? Không thể hoàn tác!')"><i class="bi bi-trash text-danger"></i></button>
+                                        </form>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

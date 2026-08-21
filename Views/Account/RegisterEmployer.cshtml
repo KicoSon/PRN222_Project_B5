@@ -1,0 +1,102 @@
+@model StudentPartTime.Models.RegisterEmployerViewModel
+@{
+    ViewData["Title"] = "Đăng ký Nhà tuyển dụng";
+}
+
+<div class="container mt-4 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-md-9 col-lg-7">
+            <div class="spt-form-card shadow-sm border">
+                <div class="text-center mb-4">
+                    <span class="logo-in-badge fs-3 px-2 py-1 me-1">in</span>
+                    <span class="fw-bold text-dark fs-4">Student<span class="text-linkedin">PT</span></span>
+                    <h1 class="h4 fw-bold text-dark mt-2 mb-1">Đăng ký dành cho Nhà tuyển dụng</h1>
+                    <p class="text-muted small">Đăng tin tuyển dụng và tìm kiếm nhân sự bán thời gian chất lượng</p>
+                </div>
+
+                <form asp-action="RegisterEmployer" method="post">
+                    @Html.AntiForgeryToken()
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small mb-3"></div>
+
+                    <h6 class="fw-bold text-linkedin mb-3"><i class="bi bi-person-circle me-1"></i>Thông tin tài khoản đại diện</h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label asp-for="FullName">Họ và tên người đại diện *</label>
+                            <input asp-for="FullName" class="form-control" placeholder="Nguyễn Văn B" id="input-fullname" />
+                            <span asp-validation-for="FullName" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Email">Email đăng nhập *</label>
+                            <input asp-for="Email" class="form-control" placeholder="hr@company.com" id="input-email" />
+                            <span asp-validation-for="Email" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="PhoneNumber">Số điện thoại liên hệ</label>
+                            <input asp-for="PhoneNumber" class="form-control" placeholder="0901234567" id="input-phone" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Position">Chức vụ trong công ty *</label>
+                            <input asp-for="Position" class="form-control" placeholder="VD: Trưởng phòng HR / Quản lý" id="input-position" />
+                            <span asp-validation-for="Position" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Password">Mật khẩu *</label>
+                            <input asp-for="Password" class="form-control" type="password" placeholder="Tối thiểu 6 ký tự" id="input-password" />
+                            <span asp-validation-for="Password" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="ConfirmPassword">Xác nhận mật khẩu *</label>
+                            <input asp-for="ConfirmPassword" class="form-control" type="password" placeholder="Nhập lại mật khẩu" id="input-confirm-password" />
+                            <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <h6 class="fw-bold text-linkedin mb-3"><i class="bi bi-building me-1"></i>Thông tin doanh nghiệp / Công ty</h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label asp-for="CompanyName">Tên thương hiệu / Công ty *</label>
+                            <input asp-for="CompanyName" class="form-control" placeholder="VD: Công ty TNHH ABC" id="input-company-name" />
+                            <span asp-validation-for="CompanyName" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="CompanyEmail">Email doanh nghiệp</label>
+                            <input asp-for="CompanyEmail" class="form-control" placeholder="contact@company.com" id="input-company-email" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="CompanyPhone">Điện thoại công ty</label>
+                            <input asp-for="CompanyPhone" class="form-control" placeholder="028 1234 5678" id="input-company-phone" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Website">Website công ty</label>
+                            <input asp-for="Website" class="form-control" placeholder="https://company.com" id="input-website" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="ProvinceId">Tỉnh / Thành phố trụ sở *</label>
+                            <select asp-for="ProvinceId" asp-items="ViewBag.Provinces" class="form-select" id="select-province">
+                                <option value="">-- Chọn tỉnh/thành --</option>
+                            </select>
+                            <span asp-validation-for="ProvinceId" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Address">Địa chỉ chi tiết</label>
+                            <input asp-for="Address" class="form-control" placeholder="Số nhà, Tên đường, Phường/Xã..." id="input-address" />
+                        </div>
+                        <div class="col-12">
+                            <label asp-for="Description">Giới thiệu ngắn về doanh nghiệp</label>
+                            <textarea asp-for="Description" class="form-control" rows="3" placeholder="Ngành nghề kinh doanh, quy mô, văn hóa công ty..." id="input-company-description"></textarea>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-linkedin w-100 py-2" id="btn-register-employer">Đăng ký Nhà tuyển dụng</button>
+                    <p class="text-center text-muted small mt-3">
+                        Đã có tài khoản? <a asp-action="Login" class="fw-bold text-linkedin text-decoration-none hover-underline">Đăng nhập</a>
+                    </p>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+}

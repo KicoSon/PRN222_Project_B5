@@ -1,0 +1,56 @@
+@model StudentPartTime.Models.LoginViewModel
+@{
+    ViewData["Title"] = "Đăng nhập";
+}
+
+<div class="container mt-4 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5 col-lg-4">
+            <div class="spt-form-card shadow-sm border text-center">
+                <div class="mb-3">
+                    <span class="logo-in-badge fs-3 px-2 py-1 me-1">in</span>
+                    <span class="fw-bold text-dark fs-4">Student<span class="text-linkedin">PT</span></span>
+                </div>
+                <h1 class="h4 fw-bold text-dark mb-1">Đăng nhập</h1>
+                <p class="text-muted small mb-4">Cùng phát triển sự nghiệp và cơ hội việc làm của bạn</p>
+
+                <form asp-action="Login" method="post" class="text-start">
+                    @Html.AntiForgeryToken()
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small mb-3"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="Email">Email của bạn</label>
+                        <input asp-for="Email" class="form-control" placeholder="Email đăng nhập" id="input-email" />
+                        <span asp-validation-for="Email" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label asp-for="Password" class="mb-0">Mật khẩu</label>
+                            <a asp-action="ForgotPassword" class="text-linkedin small fw-semibold text-decoration-none hover-underline">Quên mật khẩu?</a>
+                        </div>
+                        <input asp-for="Password" class="form-control" type="password" placeholder="Nhập mật khẩu" id="input-password" />
+                        <span asp-validation-for="Password" class="text-danger small"></span>
+                    </div>
+
+                    <button type="submit" class="btn btn-linkedin w-100 py-2 mt-2" id="btn-login">Đăng nhập</button>
+
+                    <div class="my-4 text-center text-muted small position-relative">
+                        <hr class="m-0" />
+                        <span class="bg-white px-2 position-relative text-secondary" style="top: -10px;">Hoặc</span>
+                    </div>
+
+                    <div class="text-center small">
+                        Bạn chưa có tài khoản? <br />
+                        <a asp-action="RegisterStudent" class="fw-bold text-linkedin text-decoration-none hover-underline me-2">Đăng ký Sinh viên</a> |
+                        <a asp-action="RegisterEmployer" class="fw-bold text-linkedin text-decoration-none hover-underline ms-2">Đăng ký Nhà tuyển dụng</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+}
