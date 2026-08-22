@@ -1,0 +1,110 @@
+# ==========================================
+# .NET / ASP.NET Core
+# ==========================================
+
+# Build output
+bin/
+obj/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Visual Studio Code
+.vscode/
+
+# JetBrains Rider
+.idea/
+*.sln.iml
+
+# ==========================================
+# ASP.NET Core Configuration
+# ==========================================
+
+# Local configuration / secrets
+appsettings.json
+appsettings.*.json
+
+# User secrets
+secrets.json
+
+# ==========================================
+# Debug / Logs
+# ==========================================
+
+*.log
+logs/
+Log/
+Debug/
+debug/
+*.pdb
+*.dmp
+
+# ==========================================
+# Test / Coverage
+# ==========================================
+
+TestResults/
+coverage/
+*.coverage
+*.coveragexml
+
+# ==========================================
+# NuGet
+# ==========================================
+
+packages/
+*.nupkg
+*.snupkg
+
+# ==========================================
+# Publish
+# ==========================================
+
+publish/
+Publish/
+*.publishsettings
+
+# ==========================================
+# Node.js / React
+# ==========================================
+
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+dist/
+build/
+.next/
+.nuxt/
+
+# ==========================================
+# Environment Variables
+# ==========================================
+
+.env
+.env.*
+!.env.example
+
+# ==========================================
+# Temporary files
+# ==========================================
+
+*.tmp
+*.temp
+*.cache
+*.swp
+*.swo
+
+# ==========================================
+# OS files
+# ==========================================
+
+.DS_Store
+Thumbs.db
+desktop.ini
