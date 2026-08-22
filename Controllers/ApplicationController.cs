@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using StudentPartTime.Models;
+using StudentPartTime.Hubs;
+using Microsoft.AspNetCore.SignalR;
 using StudentPartTime.Services;
 
 namespace StudentPartTime.Controllers;
@@ -16,15 +18,21 @@ public class ApplicationController : Controller
     private readonly StudentPartTimeJobDbContext _context;
     private readonly IAuditService _auditService;
     private readonly INotificationService _notificationService;
+    private readonly IChatService _chatService;
+    private readonly IHubContext<ChatHub> _hub;
 
     public ApplicationController(
         StudentPartTimeJobDbContext context,
         IAuditService auditService,
-        INotificationService notificationService)
+        INotificationService notificationService,
+        IChatService chatService,
+        IHubContext<ChatHub> hub)
     {
         _context = context;
         _auditService = auditService;
         _notificationService = notificationService;
+        _chatService = chatService;
+        _hub = hub;
     }
 
     // UC-21: Apply for a Job (Student only)
@@ -103,8 +111,9 @@ public class ApplicationController : Controller
                 "Application");
         }
 
-        TempData["SuccessMessage"] = "Application submitted successfully!";
-        return RedirectToAction(nameof(History));
+        var room = await _chatService.GetOrCreateRoomAsync(application.ApplicationId);
+        TempData["SuccessMessage"] = "Ứng tuyển thành công! Bạn có thể trao đổi ngay với nhà tuyển dụng.";
+        return RedirectToAction("Room", "Chat", new { id = room.ChatRoomId });
     }
 
     // UC-22: Cancel Application (Student only)
@@ -253,6 +262,22 @@ public class ApplicationController : Controller
                 $"Your application for '{application.Job.Title}' has been updated to: {status}.",
                 "Application");
         }
+
+        // Keep the related chat in sync even when status is changed from the applicants page.
+        var room = await _chatService.GetOrCreateRoomAsync(application.ApplicationId);
+        var systemMessage = await _chatService.SendSystemMessageAsync(
+            room.ChatRoomId,
+            $"Trạng thái hồ sơ đã được cập nhật: {status}.");
+        await _hub.Clients.Group($"room-{room.ChatRoomId}").SendAsync("ReceiveMessage", new
+        {
+            chatMessageId = systemMessage.ChatMessageId,
+            senderUserId = (int?)null,
+            content = systemMessage.Content,
+            isSystemMessage = true,
+            isFlagged = false,
+            createdAt = systemMessage.CreatedAt.ToString("HH:mm")
+        });
+        await _hub.Clients.Group($"room-{room.ChatRoomId}").SendAsync("ApplicationStatusChanged", new { status });
 
         TempData["SuccessMessage"] = $"Application status updated to {status}.";
         return RedirectToAction(nameof(Applicants), new { jobId = application.JobId });

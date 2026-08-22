@@ -17,6 +17,10 @@ public partial class StudentPartTimeJobDbContext : DbContext
 
     public virtual DbSet<Application> Applications { get; set; }
 
+    public virtual DbSet<ChatRoom> ChatRooms { get; set; }
+
+    public virtual DbSet<ChatMessage> ChatMessages { get; set; }
+
     public virtual DbSet<AuditLog> AuditLogs { get; set; }
 
     public virtual DbSet<Bookmark> Bookmarks { get; set; }
@@ -84,6 +88,49 @@ public partial class StudentPartTimeJobDbContext : DbContext
                 .HasForeignKey(d => d.StudentId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Applications_Students");
+        });
+
+        modelBuilder.Entity<ChatRoom>(entity =>
+        {
+            entity.HasKey(e => e.ChatRoomId);
+            entity.HasIndex(e => e.ApplicationId, "UQ_ChatRooms_ApplicationId").IsUnique();
+            entity.HasIndex(e => e.StudentId, "IX_ChatRooms_StudentId");
+            entity.HasIndex(e => e.EmployerId, "IX_ChatRooms_EmployerId");
+            entity.HasIndex(e => e.LastMessageAt, "IX_ChatRooms_LastMessageAt");
+            entity.Property(e => e.CreatedAt).HasPrecision(0).HasDefaultValueSql("(sysdatetime())");
+            entity.Property(e => e.LastMessageAt).HasPrecision(0);
+            entity.HasOne(d => d.Application).WithOne()
+                .HasForeignKey<ChatRoom>(d => d.ApplicationId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_ChatRooms_Applications");
+            entity.HasOne(d => d.Job).WithMany()
+                .HasForeignKey(d => d.JobId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_ChatRooms_Jobs");
+            entity.HasOne(d => d.Student).WithMany()
+                .HasForeignKey(d => d.StudentId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_ChatRooms_Students");
+            entity.HasOne(d => d.Employer).WithMany()
+                .HasForeignKey(d => d.EmployerId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_ChatRooms_Employers");
+        });
+
+        modelBuilder.Entity<ChatMessage>(entity =>
+        {
+            entity.HasKey(e => e.ChatMessageId);
+            entity.HasIndex(e => e.ChatRoomId, "IX_ChatMessages_ChatRoomId");
+            entity.Property(e => e.Content).HasMaxLength(1000);
+            entity.Property(e => e.CreatedAt).HasPrecision(0).HasDefaultValueSql("(sysdatetime())");
+            entity.HasOne(d => d.ChatRoom).WithMany(p => p.Messages)
+                .HasForeignKey(d => d.ChatRoomId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_ChatMessages_ChatRooms");
+            entity.HasOne(d => d.Sender).WithMany()
+                .HasForeignKey(d => d.SenderUserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_ChatMessages_Users");
         });
 
         modelBuilder.Entity<AuditLog>(entity =>

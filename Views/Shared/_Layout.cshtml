@@ -53,6 +53,15 @@
                                 </a>
                             </li>
                         }
+                        @if (User.IsInRole("Student") || User.IsInRole("Employer"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Chat" ? "active" : "")" asp-controller="Chat" asp-action="Index">
+                                    <i class="bi bi-chat-dots-fill"></i>
+                                    <span>Tin nhắn</span>
+                                </a>
+                            </li>
+                        }
                         @if (User.IsInRole("Student"))
                         {
                             <li class="nav-item">

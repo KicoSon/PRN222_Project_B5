@@ -1,0 +1,64 @@
+@model IEnumerable<StudentPartTime.Models.ChatRoom>
+@{
+    ViewData["Title"] = "Tin nhắn";
+    var isEmployer = (bool)(ViewBag.IsEmployer ?? false);
+}
+
+<div class="container chat-page py-2 py-md-3">
+    <div class="chat-inbox-shell">
+        <div class="chat-inbox-header">
+            <div>
+                <div class="eyebrow"><i class="bi bi-chat-dots-fill"></i> MESSAGES</div>
+                <h1 class="h4 fw-bold mb-1">Tin nhắn</h1>
+                <p class="text-muted small mb-0">Trao đổi trực tiếp về công việc và hồ sơ ứng tuyển.</p>
+            </div>
+            <span class="chat-count">@Model.Count() cuộc trò chuyện</span>
+        </div>
+
+        @if (!Model.Any())
+        {
+            <div class="chat-empty">
+                <div class="chat-empty-icon"><i class="bi bi-chat-square-text"></i></div>
+                <h5 class="fw-bold">Chưa có cuộc trò chuyện</h5>
+                <p class="text-muted small mb-3">@(isEmployer ? "Khi có sinh viên ứng tuyển, cuộc trò chuyện sẽ xuất hiện ở đây." : "Sau khi bạn ứng tuyển, hệ thống sẽ tự tạo cuộc trò chuyện với nhà tuyển dụng.")</p>
+                @if (!isEmployer)
+                {
+                    <a asp-controller="Job" asp-action="Index" class="btn btn-linkedin rounded-pill px-4">Tìm việc ngay</a>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="chat-room-list">
+                @foreach (var room in Model)
+                {
+                    var last = room.Messages.OrderByDescending(m => m.CreatedAt).ThenByDescending(m => m.ChatMessageId).FirstOrDefault();
+                    var unread = isEmployer
+                        ? room.Messages.Count(m => !m.IsSystemMessage && !m.IsReadByEmployer && m.SenderUserId != null)
+                        : room.Messages.Count(m => !m.IsSystemMessage && !m.IsReadByStudent && m.SenderUserId != null);
+                    var title = isEmployer ? room.Student?.User?.FullName : room.Job?.Title;
+                    var subtitle = isEmployer
+                        ? $"{room.Student?.University ?? "Chưa cập nhật"} • {room.Student?.Major ?? "Chưa cập nhật"}"
+                        : $"{room.Employer?.Company?.CompanyName ?? "Nhà tuyển dụng"} • {room.Job?.Province?.ProvinceName ?? ""}";
+                    var initials = (title ?? "C").Trim();
+                    initials = initials.Length > 0 ? initials.Substring(0, 1).ToUpperInvariant() : "C";
+                    <a class="chat-room-item @(unread > 0 ? "has-unread" : "")" asp-action="Room" asp-route-id="@room.ChatRoomId">
+                        <div class="chat-avatar">@initials</div>
+                        <div class="chat-room-main">
+                            <div class="d-flex justify-content-between gap-2">
+                                <div class="chat-room-title text-truncate">@title</div>
+                                <div class="chat-room-time">@(room.LastMessageAt?.ToString("HH:mm") ?? "")</div>
+                            </div>
+                            <div class="chat-room-subtitle text-truncate">@subtitle</div>
+                            <div class="chat-room-preview text-truncate">@(last?.Content ?? "Chưa có tin nhắn")</div>
+                        </div>
+                        @if (unread > 0)
+                        {
+                            <span class="chat-unread">@(unread > 99 ? "99+" : unread)</span>
+                        }
+                    </a>
+                }
+            </div>
+        }
+    </div>
+</div>

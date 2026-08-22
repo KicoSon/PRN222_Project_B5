@@ -79,6 +79,9 @@
                                 }
                             </td>
                             <td class="text-end">
+                                <a asp-controller="Chat" asp-action="Open" asp-route-applicationId="@app.ApplicationId" class="btn btn-sm btn-outline-linkedin rounded-pill px-3 me-1">
+                                    <i class="bi bi-chat-dots me-1"></i>Chat
+                                </a>
                                 @if (app.Status == "Pending")
                                 {
                                     <form asp-action="Cancel" asp-route-id="@app.ApplicationId" method="post" class="d-inline">

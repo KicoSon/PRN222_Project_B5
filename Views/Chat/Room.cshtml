@@ -1,0 +1,142 @@
+@model StudentPartTime.Models.ChatRoom
+@{
+    ViewData["Title"] = "Trò chuyện";
+    var messages = ViewBag.Messages as List<StudentPartTime.Models.ChatMessage> ?? new();
+    var currentUserId = (int)ViewBag.CurrentUserId;
+    var application = ViewBag.Application as StudentPartTime.Models.Application;
+    var isEmployer = (bool)(ViewBag.IsEmployer ?? false);
+    var otherName = isEmployer ? Model.Student.User.FullName : Model.Employer.Company.CompanyName;
+    var otherInitial = string.IsNullOrWhiteSpace(otherName) ? "C" : otherName.Trim().Substring(0, 1).ToUpperInvariant();
+}
+
+<div class="container-fluid chat-room-page py-2 py-md-3">
+    <div class="chat-layout">
+        <aside class="chat-sidebar d-none d-lg-flex">
+            <div class="chat-sidebar-head">
+                <a asp-action="Index" class="chat-back"><i class="bi bi-arrow-left"></i></a>
+                <div>
+                    <div class="eyebrow">TIN NHẮN</div>
+                    <div class="fw-bold">Hộp thư</div>
+                </div>
+            </div>
+            <div class="chat-sidebar-list">
+                <a asp-action="Room" asp-route-id="@Model.ChatRoomId" class="chat-mini-room active">
+                    <div class="chat-avatar small">@otherInitial</div>
+                    <div class="min-w-0">
+                        <div class="fw-semibold text-truncate">@otherName</div>
+                        <div class="small text-muted text-truncate">@Model.Job.Title</div>
+                    </div>
+                </a>
+            </div>
+        </aside>
+
+        <section class="chat-card">
+            <header class="chat-context-header">
+                <div class="d-flex align-items-center gap-3 min-w-0">
+                    <a asp-action="Index" class="chat-mobile-back d-lg-none"><i class="bi bi-arrow-left"></i></a>
+                    <div class="chat-avatar large">@otherInitial</div>
+                    <div class="min-w-0">
+                        @if (isEmployer)
+                        {
+                            <h1 class="chat-person-name">@Model.Student.User.FullName</h1>
+                            <div class="chat-person-meta">@Model.Student.University • @Model.Student.Major</div>
+                            @if (!string.IsNullOrWhiteSpace(Model.Student.SkillSummary))
+                            {
+                                <div class="chat-person-skills"><i class="bi bi-stars me-1"></i>@Model.Student.SkillSummary</div>
+                            }
+                        }
+                        else
+                        {
+                            <h1 class="chat-person-name">@Model.Job.Title</h1>
+                            <div class="chat-person-meta">@Model.Employer.Company.CompanyName • @Model.Job.Province.ProvinceName</div>
+                            <div class="chat-person-skills"><i class="bi bi-cash-coin me-1"></i>@(Model.Job.SalaryMin?.ToString("N0") ?? "Thỏa thuận") - @(Model.Job.SalaryMax?.ToString("N0") ?? "Thỏa thuận") VNĐ • <i class="bi bi-calendar3 me-1"></i>Hạn @Model.Job.Deadline.ToString("dd/MM/yyyy")</div>
+                        }
+                    </div>
+                </div>
+
+                @if (isEmployer && application != null)
+                {
+                    <div class="chat-status-box">
+                        <label for="select-status" class="small text-muted d-block mb-1">Trạng thái hồ sơ</label>
+                        <select id="select-status" class="form-select form-select-sm">
+                            <option value="Pending" selected="@(application.Status == "Pending")">Mới nộp</option>
+                            <option value="Interview" selected="@(application.Status == "Interview")">Mời phỏng vấn</option>
+                            <option value="Approved" selected="@(application.Status == "Approved")">Nhận việc</option>
+                            <option value="Rejected" selected="@(application.Status == "Rejected")">Từ chối</option>
+                        </select>
+                    </div>
+                }
+            </header>
+
+            @if (isEmployer)
+            {
+                <div class="chat-profile-strip">
+                    <div><span>Trường</span><strong>@(Model.Student.University ?? "Chưa cập nhật")</strong></div>
+                    <div><span>Ngành</span><strong>@(Model.Student.Major ?? "Chưa cập nhật")</strong></div>
+                    <div><span>Kinh nghiệm</span><strong>@(string.IsNullOrWhiteSpace(Model.Student.Experience) ? "Chưa cập nhật" : Model.Student.Experience)</strong></div>
+                    @if (application?.ResumeId != null)
+                    {
+                        <a asp-controller="Application" asp-action="Resume" asp-route-resumeId="@application.ResumeId" asp-route-jobId="@Model.JobId" class="btn btn-sm btn-outline-linkedin rounded-pill"><i class="bi bi-file-earmark-pdf me-1"></i>Xem CV</a>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="chat-profile-strip student-job-strip">
+                    <div><span>Mức lương</span><strong>@(Model.Job.SalaryMin?.ToString("N0") ?? "Thỏa thuận") - @(Model.Job.SalaryMax?.ToString("N0") ?? "Thỏa thuận") VNĐ</strong></div>
+                    <div><span>Địa điểm</span><strong>@(Model.Job.Province?.ProvinceName ?? Model.Job.Address ?? "Chưa cập nhật")</strong></div>
+                    <div><span>Thời gian</span><strong>@(Model.Job.WorkingTime ?? "Linh hoạt")</strong></div>
+                </div>
+            }
+
+            <div id="message-list" class="chat-messages">
+                @foreach (var m in messages)
+                {
+                    if (m.IsSystemMessage)
+                    {
+                        <div class="chat-system-message @(m.IsFlagged ? "flagged" : "")">
+                            <i class="bi @(m.IsFlagged ? "bi-shield-exclamation" : "bi-info-circle") me-1"></i>@m.Content
+                            <span>@m.CreatedAt.ToString("HH:mm")</span>
+                        </div>
+                    }
+                    else
+                    {
+                        var mine = m.SenderUserId == currentUserId;
+                        <div class="chat-message-row @(mine ? "mine" : "theirs")">
+                            <div class="chat-bubble">
+                                <div class="chat-bubble-content">@m.Content</div>
+                                <div class="chat-bubble-time">@m.CreatedAt.ToString("HH:mm")</div>
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+
+            <div class="chat-composer-wrap">
+                <div id="connection-status" class="chat-connection-status"><span class="dot"></span> Đang kết nối...</div>
+                <div class="chat-composer">
+                    <input id="input-message" maxlength="1000" autocomplete="off" type="text" placeholder="Nhập tin nhắn..." aria-label="Tin nhắn" />
+                    <button id="btn-send" type="button" class="chat-send"><i class="bi bi-send-fill"></i><span>Gửi</span></button>
+                </div>
+                <div class="chat-helper"><i class="bi bi-shield-check me-1"></i> Không chia sẻ số điện thoại, Zalo hoặc liên hệ ngoài hệ thống.</div>
+            </div>
+        </section>
+    </div>
+</div>
+
+<form id="chat-antiforgery-form" class="d-none">@Html.AntiForgeryToken()</form>
+<input type="hidden" id="chat-room-id" value="@Model.ChatRoomId" />
+<input type="hidden" id="application-id" value="@(application?.ApplicationId ?? 0)" />
+<script>
+    window.CHAT_CONFIG = {
+        roomId: @Model.ChatRoomId,
+        applicationId: @(application?.ApplicationId ?? 0),
+        currentUserId: @currentUserId,
+        isEmployer: @(isEmployer.ToString().ToLowerInvariant())
+    };
+</script>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr@8.0.7/dist/browser/signalr.min.js"></script>
+    <script src="~/js/chat.js" asp-append-version="true"></script>
+}

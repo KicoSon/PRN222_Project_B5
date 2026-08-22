@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using StudentPartTime.Hubs;
 using StudentPartTime.Models;
 using StudentPartTime.Services;
 
@@ -21,6 +22,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+builder.Services.AddSignalR();
 
 // Register Custom Services
 builder.Services.AddScoped<IAuditService, AuditService>();
@@ -30,6 +32,7 @@ builder.Services.AddScoped<IJobTypeService, JobTypeService>();
 builder.Services.AddScoped<IProvinceService, ProvinceService>();
 builder.Services.AddScoped<ICompanyService, CompanyService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
+builder.Services.AddScoped<IChatService, ChatService>();
 
 var app = builder.Build();
 
@@ -41,6 +44,8 @@ using (var scope = app.Services.CreateScope())
     {
         var context = services.GetRequiredService<StudentPartTimeJobDbContext>();
         await DbInitializer.InitializeAsync(context);
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        await ChatSchemaInitializer.EnsureCreatedAsync(context, logger);
     }
     catch (Exception ex)
     {
@@ -65,6 +70,8 @@ app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.MapHub<ChatHub>("/chatHub");
 
 app.MapControllerRoute(
     name: "default",
