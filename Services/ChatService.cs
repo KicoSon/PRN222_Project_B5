@@ -12,6 +12,11 @@ public interface IChatService
     Task<ChatMessage> SendSystemMessageAsync(int chatRoomId, string content, bool flagged = false);
     Task<List<ChatRoom>> GetRoomsForUserAsync(int userId);
     Task MarkAsReadAsync(int chatRoomId, int userId);
+
+    // --- Chống lạm dụng / quấy rối (tái dùng bảng có sẵn, không thêm bảng mới) ---
+    Task<bool> IsRoomClosedAsync(int chatRoomId);
+    Task<bool> IsUserActiveAsync(int userId);
+    Task<ChatMessage?> GetMessageAsync(int chatMessageId);
 }
 
 public class ChatService : IChatService
@@ -91,13 +96,22 @@ public class ChatService : IChatService
 
         if (message.IsFlagged)
         {
+            // Đếm số lần người này từng bị gắn cờ trong đúng phòng chat này (dùng COUNT trên
+            // cột IsFlagged đã có sẵn, không cần thêm cột đếm riêng) để cảnh báo leo thang.
+            var priorFlaggedCount = await _context.ChatMessages
+                .CountAsync(m => m.ChatRoomId == chatRoomId && m.SenderUserId == senderUserId && m.IsFlagged);
+
+            var warningText = priorFlaggedCount >= 2
+                ? "Tài khoản này đã nhiều lần chia sẻ liên hệ ngoài hệ thống. Nếu bị làm phiền, hãy dùng nút Báo cáo trên tin nhắn để gửi cho quản trị viên."
+                : "Tin nhắn có dấu hiệu chia sẻ số điện thoại hoặc liên hệ ngoài hệ thống. Vì an toàn, vui lòng trao đổi công việc trong khung chat này.";
+
             warning = new ChatMessage
             {
                 ChatRoomId = chatRoomId,
                 SenderUserId = null,
                 IsSystemMessage = true,
                 IsFlagged = true,
-                Content = "Tin nhắn có dấu hiệu chia sẻ số điện thoại hoặc liên hệ ngoài hệ thống. Vì an toàn, vui lòng trao đổi công việc trong khung chat này.",
+                Content = warningText,
                 CreatedAt = DateTime.Now.AddMilliseconds(1)
             };
             _context.ChatMessages.Add(warning);
@@ -140,7 +154,9 @@ public class ChatService : IChatService
 
     public async Task MarkAsReadAsync(int chatRoomId, int userId)
     {
-        var room = await _context.ChatRooms.FirstAsync(r => r.ChatRoomId == chatRoomId);
+        var room = await _context.ChatRooms
+            .Include(r => r.Student)
+            .FirstAsync(r => r.ChatRoomId == chatRoomId);
         var isStudent = room.Student.UserId == userId;
         var messages = await _context.ChatMessages
             .Where(m => m.ChatRoomId == chatRoomId && !m.IsSystemMessage)
@@ -154,4 +170,23 @@ public class ChatService : IChatService
 
         await _context.SaveChangesAsync();
     }
+
+    // Phòng chat tự khóa gửi tin khi hồ sơ đã bị Rejected - tái dùng Application.Status có sẵn,
+    // không cần thêm cột "IsLocked" riêng cho ChatRoom.
+    public Task<bool> IsRoomClosedAsync(int chatRoomId) =>
+        _context.ChatRooms
+            .Where(r => r.ChatRoomId == chatRoomId)
+            .Select(r => r.Application.Status == "Rejected")
+            .FirstOrDefaultAsync();
+
+    // Nếu Admin đã khóa tài khoản (User.IsActive = false, chức năng Admin > Users có sẵn),
+    // chặn luôn việc gửi tin ở tầng chat.
+    public Task<bool> IsUserActiveAsync(int userId) =>
+        _context.Users
+            .Where(u => u.UserId == userId)
+            .Select(u => u.IsActive)
+            .FirstOrDefaultAsync();
+
+    public Task<ChatMessage?> GetMessageAsync(int chatMessageId) =>
+        _context.ChatMessages.FirstOrDefaultAsync(m => m.ChatMessageId == chatMessageId);
 }

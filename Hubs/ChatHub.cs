@@ -29,6 +29,12 @@ public class ChatHub : Hub
         if (string.IsNullOrWhiteSpace(content)) return;
         if (content.Length > 1000) throw new HubException("Tin nhắn tối đa 1000 ký tự.");
 
+        if (!await _chatService.IsUserActiveAsync(userId))
+            throw new HubException("Tài khoản của bạn đã bị khóa và không thể gửi tin nhắn.");
+
+        if (await _chatService.IsRoomClosedAsync(chatRoomId))
+            throw new HubException("Cuộc trò chuyện đã đóng vì hồ sơ ứng tuyển đã bị từ chối.");
+
         var (message, warning) = await _chatService.SendMessageAsync(chatRoomId, userId, content);
         await Clients.Group(GroupName(chatRoomId)).SendAsync("ReceiveMessage", ToDto(message));
 

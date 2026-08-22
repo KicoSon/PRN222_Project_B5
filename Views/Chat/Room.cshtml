@@ -5,6 +5,9 @@
     var currentUserId = (int)ViewBag.CurrentUserId;
     var application = ViewBag.Application as StudentPartTime.Models.Application;
     var isEmployer = (bool)(ViewBag.IsEmployer ?? false);
+    var roomClosed = (bool)(ViewBag.RoomClosed ?? false);
+    var otherUserActive = (bool)(ViewBag.OtherUserActive ?? true);
+    var chatLocked = roomClosed || !otherUserActive;
     var otherName = isEmployer ? Model.Student.User.FullName : Model.Employer.Company.CompanyName;
     var otherInitial = string.IsNullOrWhiteSpace(otherName) ? "C" : otherName.Trim().Substring(0, 1).ToUpperInvariant();
 }
@@ -56,14 +59,25 @@
 
                 @if (isEmployer && application != null)
                 {
+                    var statusBadgeClass = application.Status switch
+                    {
+                        "Approved" => "badge-approved",
+                        "Pending" => "badge-pending",
+                        "Interview" => "badge-interview",
+                        "Rejected" => "badge-rejected",
+                        _ => "bg-secondary"
+                    };
+                    var statusText = application.Status switch
+                    {
+                        "Approved" => "Đã duyệt nhận",
+                        "Pending" => "Mới nộp",
+                        "Interview" => "Phỏng vấn",
+                        "Rejected" => "Từ chối",
+                        _ => application.Status
+                    };
                     <div class="chat-status-box">
-                        <label for="select-status" class="small text-muted d-block mb-1">Trạng thái hồ sơ</label>
-                        <select id="select-status" class="form-select form-select-sm">
-                            <option value="Pending" selected="@(application.Status == "Pending")">Mới nộp</option>
-                            <option value="Interview" selected="@(application.Status == "Interview")">Mời phỏng vấn</option>
-                            <option value="Approved" selected="@(application.Status == "Approved")">Nhận việc</option>
-                            <option value="Rejected" selected="@(application.Status == "Rejected")">Từ chối</option>
-                        </select>
+                        <label class="small text-muted d-block mb-1">Trạng thái hồ sơ</label>
+                        <span id="status-badge" class="status-pill @statusBadgeClass">@statusText</span>
                     </div>
                 }
             </header>
@@ -103,6 +117,12 @@
                     {
                         var mine = m.SenderUserId == currentUserId;
                         <div class="chat-message-row @(mine ? "mine" : "theirs")">
+                            @if (!mine)
+                            {
+                                <button type="button" class="chat-report-btn" title="Báo cáo tin nhắn này" data-message-id="@m.ChatMessageId">
+                                    <i class="bi bi-flag"></i>
+                                </button>
+                            }
                             <div class="chat-bubble">
                                 <div class="chat-bubble-content">@m.Content</div>
                                 <div class="chat-bubble-time">@m.CreatedAt.ToString("HH:mm")</div>
@@ -113,10 +133,24 @@
             </div>
 
             <div class="chat-composer-wrap">
-                <div id="connection-status" class="chat-connection-status"><span class="dot"></span> Đang kết nối...</div>
-                <div class="chat-composer">
-                    <input id="input-message" maxlength="1000" autocomplete="off" type="text" placeholder="Nhập tin nhắn..." aria-label="Tin nhắn" />
-                    <button id="btn-send" type="button" class="chat-send"><i class="bi bi-send-fill"></i><span>Gửi</span></button>
+                @if (chatLocked)
+                {
+                    <div class="chat-locked-banner">
+                        <i class="bi bi-lock-fill me-1"></i>
+                        @(roomClosed
+                            ? "Cuộc trò chuyện đã đóng vì hồ sơ ứng tuyển đã bị từ chối."
+                            : "Tài khoản của đối phương đã bị quản trị viên khóa. Bạn không thể gửi thêm tin nhắn.")
+                    </div>
+                }
+                else
+                {
+                    <div id="connection-status" class="chat-connection-status"><span class="dot"></span> Đang kết nối...</div>
+                }
+                <div class="chat-composer @(chatLocked ? "disabled" : "")">
+                    <input id="input-message" maxlength="1000" autocomplete="off" type="text"
+                           placeholder="@(chatLocked ? "Cuộc trò chuyện đã đóng" : "Nhập tin nhắn...")"
+                           aria-label="Tin nhắn" disabled="@chatLocked" />
+                    <button id="btn-send" type="button" class="chat-send" disabled="@chatLocked"><i class="bi bi-send-fill"></i><span>Gửi</span></button>
                 </div>
                 <div class="chat-helper"><i class="bi bi-shield-check me-1"></i> Không chia sẻ số điện thoại, Zalo hoặc liên hệ ngoài hệ thống.</div>
             </div>
@@ -132,7 +166,8 @@
         roomId: @Model.ChatRoomId,
         applicationId: @(application?.ApplicationId ?? 0),
         currentUserId: @currentUserId,
-        isEmployer: @(isEmployer.ToString().ToLowerInvariant())
+        isEmployer: @(isEmployer.ToString().ToLowerInvariant()),
+        locked: @(chatLocked.ToString().ToLowerInvariant())
     };
 </script>
 

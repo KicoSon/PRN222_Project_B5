@@ -15,17 +15,20 @@ public class ChatController : Controller
     private readonly StudentPartTimeJobDbContext _context;
     private readonly IChatService _chatService;
     private readonly INotificationService _notificationService;
+    private readonly IAuditService _auditService;
     private readonly IHubContext<ChatHub> _hub;
 
     public ChatController(
         StudentPartTimeJobDbContext context,
         IChatService chatService,
         INotificationService notificationService,
+        IAuditService auditService,
         IHubContext<ChatHub> hub)
     {
         _context = context;
         _chatService = chatService;
         _notificationService = notificationService;
+        _auditService = auditService;
         _hub = hub;
     }
 
@@ -84,70 +87,41 @@ public class ChatController : Controller
             .FirstOrDefaultAsync(a => a.ApplicationId == room.ApplicationId);
         ViewBag.IsEmployer = User.IsInRole("Employer");
 
+        // Trạng thái khóa phòng: hồ sơ đã Rejected, hoặc phía đối diện đã bị Admin khóa tài khoản.
+        ViewBag.RoomClosed = await _chatService.IsRoomClosedAsync(id);
+        var otherUserId = User.IsInRole("Employer") ? room.Student.UserId : room.Employer.UserId;
+        ViewBag.OtherUserActive = await _chatService.IsUserActiveAsync(otherUserId);
+
         await _chatService.MarkAsReadAsync(id, userId);
         return View(room);
     }
 
+    // Báo cáo 1 tin nhắn quấy rối/spam cho quản trị viên - ghi vào AuditLogs có sẵn,
+    // không tạo bảng "Report" riêng. Admin xem tại Admin > Nhật ký hệ thống, lọc theo
+    // Hành động = "ReportChatMessage".
     [HttpPost]
-    [Authorize(Roles = "Employer")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> UpdateStatusInChat(int chatRoomId, int applicationId, string status)
+    public async Task<IActionResult> ReportMessage(int chatMessageId, int chatRoomId, string? reason)
     {
         var userId = GetCurrentUserId();
-        var employerId = await _context.Employers
-            .Where(e => e.UserId == userId)
-            .Select(e => e.EmployerId)
-            .FirstOrDefaultAsync();
-        if (employerId == 0) return Unauthorized();
+        if (!await _chatService.IsRoomMemberAsync(chatRoomId, userId))
+            return Forbid();
 
-        var validStatuses = new[] { "Interview", "Approved", "Rejected" };
-        if (!validStatuses.Contains(status)) return BadRequest(new { success = false, message = "Trạng thái không hợp lệ." });
+        var message = await _chatService.GetMessageAsync(chatMessageId);
+        if (message == null || message.ChatRoomId != chatRoomId)
+            return NotFound();
 
-        var application = await _context.Applications
-            .Include(a => a.Student).ThenInclude(s => s.User)
-            .Include(a => a.Job)
-            .FirstOrDefaultAsync(a => a.ApplicationId == applicationId
-                && a.Job.EmployerId == employerId);
-        if (application == null) return NotFound();
+        if (message.SenderUserId == userId)
+            return BadRequest(new { success = false, message = "Không thể tự báo cáo tin nhắn của chính mình." });
 
-        var room = await _context.ChatRooms.FirstOrDefaultAsync(r => r.ChatRoomId == chatRoomId && r.ApplicationId == applicationId);
-        if (room == null) return BadRequest(new { success = false, message = "Phòng chat không khớp đơn ứng tuyển." });
+        var snippet = message.Content.Length > 200 ? message.Content[..200] + "..." : message.Content;
+        var description = $"Báo cáo tin nhắn #{chatMessageId} trong phòng #{chatRoomId} (người gửi: {message.SenderUserId}): \"{snippet}\"" +
+            (string.IsNullOrWhiteSpace(reason) ? "" : $" — Lý do: {reason.Trim()}");
 
-        application.Status = status;
-        application.UpdatedAt = DateTime.Now;
-        await _context.SaveChangesAsync();
+        await _auditService.LogActionAsync(userId, "ReportChatMessage", "ChatMessage", chatMessageId, description);
 
-        await _notificationService.CreateNotificationAsync(
-            application.Student.UserId,
-            "Cập nhật trạng thái ứng tuyển",
-            $"Đơn ứng tuyển '{application.Job.Title}' đã chuyển sang: {status}.",
-            "Application");
-
-        var systemMessage = await _chatService.SendSystemMessageAsync(
-            chatRoomId,
-            $"Trạng thái hồ sơ đã được cập nhật: {GetStatusText(status)}.");
-
-        await _hub.Clients.Group($"room-{chatRoomId}").SendAsync("ReceiveMessage", new
-        {
-            chatMessageId = systemMessage.ChatMessageId,
-            senderUserId = (int?)null,
-            content = systemMessage.Content,
-            isSystemMessage = true,
-            isFlagged = false,
-            createdAt = systemMessage.CreatedAt.ToString("HH:mm")
-        });
-
-        await _hub.Clients.Group($"room-{chatRoomId}").SendAsync("ApplicationStatusChanged", new { status });
-        return Json(new { success = true, status });
+        return Json(new { success = true });
     }
-
-    private static string GetStatusText(string status) => status switch
-    {
-        "Interview" => "Mời phỏng vấn",
-        "Approved" => "Đã nhận",
-        "Rejected" => "Từ chối",
-        _ => status
-    };
 
     private int GetCurrentUserId() => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 }
