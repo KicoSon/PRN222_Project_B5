@@ -188,6 +188,18 @@ public class JobController : Controller
         _context.Jobs.Add(model);
         await _context.SaveChangesAsync();
 
+        // FEATURE: ONLINE-CV - attach required skills to the newly created job
+        if (model.SkillIds != null && model.SkillIds.Count > 0)
+        {
+            var validSkillIds = await _context.Skills
+                .Where(s => s.IsActive && model.SkillIds.Contains(s.SkillId))
+                .Select(s => s.SkillId)
+                .ToListAsync();
+            foreach (var skillId in validSkillIds)
+                _context.JobSkills.Add(new JobSkill { JobId = model.JobId, SkillId = skillId });
+            await _context.SaveChangesAsync();
+        }
+
         await _auditService.LogActionAsync(userId, "CreateJob", "Job", model.JobId, $"Created job: {model.Title}");
 
         TempData["SuccessMessage"] = "Job post created and is pending admin approval.";
@@ -209,6 +221,7 @@ public class JobController : Controller
         if (job == null) return NotFound();
 
         await LoadJobFormViewBagsAsync();
+        ViewBag.SelectedSkillIds = await _context.JobSkills.Where(x => x.JobId == job.JobId).Select(x => x.SkillId).ToListAsync(); // FEATURE: ONLINE-CV
         return View(job);
     }
 
@@ -276,6 +289,20 @@ public class JobController : Controller
         if (majorChange && job.Status == "Approved")
             job.Status = "Pending";
 
+        // FEATURE: ONLINE-CV - sync the job's required skills on edit
+        var existingSkills = await _context.JobSkills.Where(x => x.JobId == job.JobId).ToListAsync();
+        if (existingSkills.Count > 0)
+            _context.JobSkills.RemoveRange(existingSkills);
+        if (model.SkillIds != null && model.SkillIds.Count > 0)
+        {
+            var validSkillIds = await _context.Skills
+                .Where(s => s.IsActive && model.SkillIds.Contains(s.SkillId))
+                .Select(s => s.SkillId)
+                .ToListAsync();
+            foreach (var skillId in validSkillIds)
+                _context.JobSkills.Add(new JobSkill { JobId = job.JobId, SkillId = skillId });
+        }
+
         await _context.SaveChangesAsync();
         await _auditService.LogActionAsync(userId, "UpdateJob", "Job", job.JobId, $"Updated job: {job.Title}");
 
@@ -308,6 +335,11 @@ public class JobController : Controller
             TempData["ErrorMessage"] = "Cannot delete job with existing applications. Use 'Close Job' instead.";
             return RedirectToAction(nameof(MyJobs));
         }
+
+        // FEATURE: ONLINE-CV - remove JobSkills join rows first to avoid FK violation
+        var joinSkills = await _context.JobSkills.Where(x => x.JobId == job.JobId).ToListAsync();
+        if (joinSkills.Count > 0)
+            _context.JobSkills.RemoveRange(joinSkills);
 
         _context.Jobs.Remove(job);
         await _context.SaveChangesAsync();
@@ -534,5 +566,6 @@ public class JobController : Controller
         ViewBag.Categories = new SelectList(await _context.Categories.Where(c => c.IsActive == true).OrderBy(c => c.CategoryName).ToListAsync(), "CategoryId", "CategoryName");
         ViewBag.JobTypes = new SelectList(await _context.JobTypes.Where(t => t.IsActive == true).OrderBy(t => t.TypeName).ToListAsync(), "JobTypeId", "TypeName");
         ViewBag.Provinces = new SelectList(await _context.Provinces.OrderBy(p => p.ProvinceName).ToListAsync(), "ProvinceId", "ProvinceName");
+        ViewBag.SkillList = await _context.Skills.Where(s => s.IsActive == true).OrderBy(s => s.SkillName).ToListAsync(); // FEATURE: ONLINE-CV
     }
 }

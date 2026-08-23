@@ -1,0 +1,33 @@
+@using StudentPartTime.Models
+@{
+    // FEATURE: ONLINE-CV
+    // Shared tag-editor used by the online CV form AND the employer job
+    // create/edit form. Expects ViewBag.SkillList (IEnumerable<Skill>) and
+    // ViewBag.SelectedSkillIds (IEnumerable<int> / HashSet<int>). Handles
+    // null gracefully so existing forms never crash when no skills exist.
+    var skills = ViewBag.SkillList as IEnumerable<Skill>;
+    var selected = ViewBag.SelectedSkillIds as IEnumerable<int> ?? Enumerable.Empty<int>();
+    var selectedSet = new HashSet<int>(selected);
+}
+<!-- FEATURE: ONLINE-CV -->
+<div class="col-12">
+    <label class="form-label">Kỹ năng</label>
+    @if (skills != null && skills.Any())
+    {
+        <div class="d-flex flex-wrap gap-2 mt-2">
+            @foreach (var skill in skills)
+            {
+                var isChecked = selectedSet.Contains(skill.SkillId);
+                <label class="spt-skill-chip">
+                    <input type="checkbox" name="skillIds" value="@skill.SkillId" @(isChecked ? "checked" : "") class="btn-check" />
+                    <span class="btn btn-sm btn-outline-linkedin rounded-pill px-3">@skill.SkillName</span>
+                </label>
+            }
+        </div>
+        <div class="form-text mt-1">Chọn một hoặc nhiều kỹ năng bạn có.</div>
+    }
+    else
+    {
+        <div class="form-text mt-1 text-muted">Chưa có kỹ năng nào trong hệ thống.</div>
+    }
+</div>

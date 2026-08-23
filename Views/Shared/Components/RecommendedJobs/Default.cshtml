@@ -1,0 +1,59 @@
+@model List<StudentPartTime.Models.JobRecommendationViewModel>
+@{
+    // FEATURE: ONLINE-CV - Recommended jobs block (student only)
+}
+<!-- FEATURE: ONLINE-CV -->
+@if (Model == null || Model.Count == 0)
+{
+    <div class="spt-card p-4 mb-3">
+        <h6 class="fw-bold text-dark mb-2 fs-6"><i class="bi bi-stars text-warning me-1"></i>Việc làm phù hợp với kỹ năng của bạn</h6>
+        <p class="small text-muted mb-2">Tạo CV trực tuyến để hệ thống gợi ý công việc phù hợp với kỹ năng của bạn.</p>
+        <a asp-controller="OnlineCv" asp-action="Create" class="btn btn-linkedin btn-sm"><i class="bi bi-file-earmark-plus me-1"></i>Tạo CV trực tuyến</a>
+    </div>
+}
+else
+{
+    <div class="spt-card p-3 mb-3">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6 class="fw-bold text-dark mb-0 fs-6"><i class="bi bi-stars text-warning me-1"></i>Việc làm phù hợp với kỹ năng của bạn</h6>
+            <a asp-controller="Job" asp-action="Index" class="small text-linkedin fw-semibold text-decoration-none">Xem tất cả</a>
+        </div>
+        <div class="d-flex flex-column gap-2">
+            @foreach (var job in Model)
+            {
+                <a asp-controller="Job" asp-action="Details" asp-route-id="@job.JobId" class="job-feed-card">
+                    <div class="d-flex align-items-start gap-3">
+                        <div class="company-logo-placeholder">
+                            @(job.CompanyName?.Substring(0, 1).ToUpper() ?? "C")
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="job-title-link line-clamp-1 mb-1">@job.Title</div>
+                            <div class="company-name-subtitle mb-1">@job.CompanyName</div>
+                            <div class="location-type-text mb-2">
+                                <i class="bi bi-geo-alt me-1"></i>@job.ProvinceName
+                                <span class="mx-1">•</span>
+                                <i class="bi bi-clock me-1"></i>@job.JobTypeName
+                            </div>
+                            <div class="d-flex flex-wrap align-items-center gap-2 mt-2">
+                                <span class="badge-linkedin-pill"><b class="text-linkedin">@job.MatchPercent%</b> phù hợp
+                                    @if (job.MatchedSkills.Any())
+                                    {
+                                        <text>· @string.Join(", ", job.MatchedSkills)</text>
+                                    }
+                                </span>
+                                @if (job.SalaryMin.HasValue || job.SalaryMax.HasValue)
+                                {
+                                    var salStr = job.SalaryMin.HasValue && job.SalaryMax.HasValue
+                                        ? $"{job.SalaryMin:N0} - {job.SalaryMax:N0} Tr/tháng"
+                                        : job.SalaryMin.HasValue ? $"Từ {job.SalaryMin:N0} Tr/tháng" : $"Đến {job.SalaryMax:N0} Tr/tháng";
+                                    <span class="salary-badge"><i class="bi bi-cash-stack me-1"></i>@salStr</span>
+                                }
+                                <span class="small text-muted ms-auto">Hạn nộp: @job.Deadline.ToString("dd/MM/yyyy")</span>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            }
+        </div>
+    </div>
+}

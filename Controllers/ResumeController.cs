@@ -165,6 +165,11 @@ public class ResumeController : Controller
                 System.IO.File.Delete(physicalPath);
         }
 
+        // FEATURE: ONLINE-CV - remove online CV skill join rows first to avoid FK violation
+        var joinSkills = await _context.ResumeSkills.Where(rs => rs.ResumeId == id).ToListAsync();
+        if (joinSkills.Count > 0)
+            _context.ResumeSkills.RemoveRange(joinSkills);
+
         _context.Resumes.Remove(resume);
         await _context.SaveChangesAsync();
         await _auditService.LogActionAsync(userId, "DeleteResume", "Resume", id, "Deleted resume");

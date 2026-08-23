@@ -1,0 +1,90 @@
+@model StudentPartTime.Models.Resume
+@{
+    ViewData["Title"] = "Xem CV trực tuyến";
+}
+
+<style>
+    /* FEATURE: ONLINE-CV - hide the action toolbar and back link when printing */
+    @@media print {
+        .no-print { display: none !important; }
+        body { background: #fff !important; }
+        .cv-preview-card { box-shadow: none !important; border: none !important; padding: 0 !important; }
+    }
+</style>
+
+<div class="container mt-2">
+    <div class="d-flex justify-content-between align-items-center mb-3 no-print">
+        <a asp-action="Index" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Danh sách CV</a>
+        <div class="d-flex gap-2">
+            <a asp-action="Edit" asp-route-id="@Model.ResumeId" class="btn btn-outline-secondary btn-sm"><i class="bi bi-pencil me-1"></i>Chỉnh sửa</a>
+            <button type="button" class="btn btn-linkedin btn-sm" onclick="window.print()"><i class="bi bi-printer me-1"></i>In / Lưu PDF</button>
+        </div>
+    </div>
+
+    <div class="spt-card cv-preview p-4">
+        <!-- Header -->
+        <div class="border-bottom pb-3 mb-3 text-center">
+            <h2 class="fw-bold text-dark mb-1">@(Model.DesiredTitle ?? "Vị trí mong muốn")</h2>
+            <p class="text-muted mb-0 small">CV trực tuyến</p>
+        </div>
+
+        <!-- Skills -->
+        @if (Model.ResumeSkills.Any())
+        {
+            <section class="mb-4">
+                <h6 class="fw-bold text-uppercase text-linkedin small mb-2"><i class="bi bi-stars me-1"></i>Kỹ năng</h6>
+                <div class="d-flex flex-wrap gap-2">
+                    @foreach (var rs in Model.ResumeSkills)
+                    {
+                        <span class="badge-linkedin-pill">@rs.Skill.SkillName</span>
+                    }
+                </div>
+            </section>
+        }
+
+        <!-- Career objective -->
+        @if (!string.IsNullOrWhiteSpace(Model.CareerObjective))
+        {
+            <section class="mb-4">
+                <h6 class="fw-bold text-uppercase text-linkedin small mb-2"><i class="bi bi-bullseye me-1"></i>Mục tiêu nghề nghiệp</h6>
+                <p class="text-dark small mb-0" style="white-space: pre-line;">@Model.CareerObjective</p>
+            </section>
+        }
+
+        <!-- Education -->
+        @if (!string.IsNullOrWhiteSpace(Model.Education))
+        {
+            <section class="mb-4">
+                <h6 class="fw-bold text-uppercase text-linkedin small mb-2"><i class="bi bi-mortarboard-fill me-1"></i>Học vấn</h6>
+                <p class="text-dark small mb-0" style="white-space: pre-line;">@Model.Education</p>
+            </section>
+        }
+
+        <!-- Work experience -->
+        @if (!string.IsNullOrWhiteSpace(Model.WorkExperience))
+        {
+            <section class="mb-4">
+                <h6 class="fw-bold text-uppercase text-linkedin small mb-2"><i class="bi bi-briefcase-fill me-1"></i>Kinh nghiệm làm việc</h6>
+                <p class="text-dark small mb-0" style="white-space: pre-line;">@Model.WorkExperience</p>
+            </section>
+        }
+
+        <!-- Projects -->
+        @if (!string.IsNullOrWhiteSpace(Model.Projects))
+        {
+            <section class="mb-4">
+                <h6 class="fw-bold text-uppercase text-linkedin small mb-2"><i class="bi bi-folder2-open me-1"></i>Dự án</h6>
+                <p class="text-dark small mb-0" style="white-space: pre-line;">@Model.Projects</p>
+            </section>
+        }
+
+        <!-- Certifications -->
+        @if (!string.IsNullOrWhiteSpace(Model.Certifications))
+        {
+            <section class="mb-4">
+                <h6 class="fw-bold text-uppercase text-linkedin small mb-2"><i class="bi bi-award-fill me-1"></i>Chứng chỉ / Giải thưởng</h6>
+                <p class="text-dark small mb-0" style="white-space: pre-line;">@Model.Certifications</p>
+            </section>
+        }
+    </div>
+</div>

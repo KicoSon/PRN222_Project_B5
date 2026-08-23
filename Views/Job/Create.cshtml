@@ -82,6 +82,8 @@
                     <label asp-for="Benefit">Quyền lợi và chế độ đãi ngộ</label>
                     <textarea asp-for="Benefit" class="form-control" rows="3" placeholder="Thưởng, phụ cấp, đào tạo..." id="input-benefit"></textarea>
                 </div>
+                <!-- FEATURE: ONLINE-CV -->
+                @{ await Html.RenderPartialAsync("~/Views/OnlineCv/_SkillTagEditor.cshtml"); }
             </div>
 
             <div class="mt-4 pt-3 border-top d-flex gap-2 justify-content-end">

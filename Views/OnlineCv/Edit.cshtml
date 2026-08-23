@@ -1,0 +1,60 @@
+@model StudentPartTime.Models.OnlineCvViewModel
+@{
+    ViewData["Title"] = "Chỉnh sửa CV trực tuyến";
+}
+
+<div class="container mt-2">
+    <div class="spt-page-header mb-3">
+        <h1 class="h4 fw-bold text-dark mb-1"><i class="bi bi-pencil-square text-linkedin me-2"></i>Chỉnh sửa CV trực tuyến</h1>
+        <p class="text-muted small mb-0">Cập nhật thông tin CV online của bạn.</p>
+    </div>
+
+    <div class="spt-form-card">
+        <form asp-action="Edit" asp-route-id="@Model.ResumeId" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="ResumeId" />
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small mb-3"></div>
+
+            <div class="row g-3">
+                <div class="col-12">
+                    <label asp-for="DesiredTitle">Vị trí mong muốn *</label>
+                    <input asp-for="DesiredTitle" class="form-control" placeholder="VD: Nhân viên phục vụ / Fresher .NET / Gia sư tiếng Anh" />
+                    <span asp-validation-for="DesiredTitle" class="text-danger small"></span>
+                </div>
+                <div class="col-12">
+                    <label asp-for="CareerObjective">Mục tiêu nghề nghiệp *</label>
+                    <textarea asp-for="CareerObjective" class="form-control" rows="3"></textarea>
+                    <span asp-validation-for="CareerObjective" class="text-danger small"></span>
+                </div>
+
+                @await Html.PartialAsync("_SkillTagEditor")
+
+                <div class="col-12">
+                    <label asp-for="Education">Học vấn</label>
+                    <textarea asp-for="Education" class="form-control" rows="3"></textarea>
+                </div>
+                <div class="col-12">
+                    <label asp-for="WorkExperience">Kinh nghiệm làm việc</label>
+                    <textarea asp-for="WorkExperience" class="form-control" rows="3"></textarea>
+                </div>
+                <div class="col-12">
+                    <label asp-for="Projects">Dự án đã thực hiện</label>
+                    <textarea asp-for="Projects" class="form-control" rows="3"></textarea>
+                </div>
+                <div class="col-12">
+                    <label asp-for="Certifications">Chứng chỉ / Giải thưởng</label>
+                    <textarea asp-for="Certifications" class="form-control" rows="2"></textarea>
+                </div>
+            </div>
+
+            <div class="mt-4 pt-3 border-top d-flex gap-2 justify-content-end">
+                <a asp-action="Index" class="btn btn-outline-secondary">Hủy</a>
+                <button type="submit" class="btn btn-linkedin px-4"><i class="bi bi-check-lg me-1"></i>Lưu thay đổi</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+}

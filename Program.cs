@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using StudentPartTime.Hubs;
+using StudentPartTime.Infrastructure; // FEATURE: ONLINE-CV
 using StudentPartTime.Models;
 using StudentPartTime.Services;
 
@@ -33,6 +34,7 @@ builder.Services.AddScoped<IProvinceService, ProvinceService>();
 builder.Services.AddScoped<ICompanyService, CompanyService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<IChatService, ChatService>();
+builder.Services.AddOnlineCvFeature(); // FEATURE: ONLINE-CV
 
 var app = builder.Build();
 
